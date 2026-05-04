@@ -20,7 +20,11 @@
       "Exec(jq)",
       "Exec(rm)",
       "Exec(mkdir)",
-      "Exec(git status)"
+      "Exec(git status)",
+      "Exec(pip install)",
+      "Exec(where python)",
+      "Exec(npx playwright)",
+      "Exec(sleep)"
     ]
   }
 }
