@@ -39,7 +39,7 @@ export function TeamMembersList({ members, taskCounts, currentUserId }: Props) {
     if (dmId) {
       router.push(`/chat/${dmId}`);
     } else {
-      toast.error("فشل بدء المحادثة");
+      toast.error("مقدرش يفتح المحادثة");
     }
   }
 
@@ -63,7 +63,7 @@ export function TeamMembersList({ members, taskCounts, currentUserId }: Props) {
                 />
                 <h3 className="font-semibold mt-3 text-base">
                   {p.full_name}
-                  {isMe && <span className="text-xs text-muted-foreground mr-1">(أنت)</span>}
+                  {isMe && <span className="text-xs text-muted-foreground mr-1">(انت)</span>}
                 </h3>
                 {p.job_title && (
                   <p className="text-sm text-muted-foreground mt-0.5 flex items-center gap-1">
@@ -86,7 +86,7 @@ export function TeamMembersList({ members, taskCounts, currentUserId }: Props) {
                     {ROLE_LABELS[p.role]}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    {taskCounts[p.id] ?? 0} مهمة
+                    {taskCounts[p.id] ?? 0} تاسك
                   </span>
                 </div>
 
@@ -98,7 +98,7 @@ export function TeamMembersList({ members, taskCounts, currentUserId }: Props) {
                     className="mt-4 w-full"
                   >
                     <MessageCircle className="h-4 w-4" />
-                    إرسال رسالة
+                    كلمه
                   </Button>
                 )}
               </div>

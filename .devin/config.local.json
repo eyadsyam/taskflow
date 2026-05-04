@@ -24,7 +24,9 @@
       "Exec(pip install)",
       "Exec(where python)",
       "Exec(npx playwright)",
-      "Exec(sleep)"
+      "Exec(sleep)",
+      "Exec(mv)",
+      "Exec(sed)"
     ]
   }
 }

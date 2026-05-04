@@ -35,7 +35,7 @@ export function TaskTable({
   if (tasks.length === 0) {
     return (
       <div className="rounded-xl border border-dashed p-12 text-center">
-        <p className="text-muted-foreground">مفيش مهام مطابقة لبحثك.</p>
+        <p className="text-muted-foreground">مفيش تاسكات بالوصف ده.</p>
       </div>
     );
   }
@@ -46,13 +46,13 @@ export function TaskTable({
         <table className="w-full text-sm">
           <thead className="bg-muted/50">
             <tr className="text-right">
-              <th className="px-4 py-3 font-medium">العنوان</th>
+              <th className="px-4 py-3 font-medium">التاسك</th>
               <th className="px-4 py-3 font-medium hidden md:table-cell">العميل</th>
               <th className="px-4 py-3 font-medium">الحالة</th>
-              <th className="px-4 py-3 font-medium hidden lg:table-cell">المنفّذ</th>
-              <th className="px-4 py-3 font-medium hidden sm:table-cell">تاريخ التسليم</th>
+              <th className="px-4 py-3 font-medium hidden lg:table-cell">الشغال عليها</th>
+              <th className="px-4 py-3 font-medium hidden sm:table-cell">التسليم</th>
               <th className="px-4 py-3 font-medium hidden md:table-cell">السعر</th>
-              <th className="px-4 py-3 font-medium hidden lg:table-cell">تم الإنشاء</th>
+              <th className="px-4 py-3 font-medium hidden lg:table-cell">اتعملت</th>
               <th className="px-4 py-3 w-10"></th>
             </tr>
           </thead>
@@ -85,7 +85,7 @@ function Row({
     const supabase = createClient();
     const { error } = await supabase.from("tasks").delete().eq("id", task.id);
     if (error) return toast.error(error.message);
-    toast.success("تم الحذف");
+    toast.success("اتمسح");
     router.refresh();
   }
 
@@ -131,27 +131,27 @@ function Row({
             <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem asChild><Link href={`/tasks/${task.id}`}>فتح</Link></DropdownMenuItem>
+            <DropdownMenuItem asChild><Link href={`/tasks/${task.id}`}>افتح</Link></DropdownMenuItem>
             {!locked && (
               <DropdownMenuItem asChild>
-                <Link href={`/tasks/${task.id}/edit`}><Pencil className="h-4 w-4" /> تعديل</Link>
+                <Link href={`/tasks/${task.id}/edit`}><Pencil className="h-4 w-4" /> عدل</Link>
               </DropdownMenuItem>
             )}
             {me.role === "admin" && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive">
-                    <Trash2 className="h-4 w-4" /> حذف
+                    <Trash2 className="h-4 w-4" /> امسح
                   </DropdownMenuItem>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
-                    <AlertDialogDescription>هتحذف التاسك &ldquo;{task.title}&rdquo; نهائياً. الإجراء ده مش قابل للتراجع.</AlertDialogDescription>
+                    <AlertDialogTitle>متأكد؟</AlertDialogTitle>
+                    <AlertDialogDescription>هتمسح التاسك &ldquo;{task.title}&rdquo; خالص. ده مش هينفع نرجعه.</AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>إلغاء</AlertDialogCancel>
-                    <AlertDialogAction onClick={onDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">حذف</AlertDialogAction>
+                    <AlertDialogCancel>لا</AlertDialogCancel>
+                    <AlertDialogAction onClick={onDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">امسحه</AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>

@@ -5,14 +5,14 @@ export default function RegisterPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-2 text-center">
-        <h2 className="text-3xl font-bold">انضم للفريق</h2>
-        <p className="text-muted-foreground">أنشئ حسابك في دقيقة واحدة</p>
+        <h2 className="text-3xl font-bold">انضم للتيم</h2>
+        <p className="text-muted-foreground">دقيقة واحدة وخلصنا</p>
       </div>
       <RegisterForm />
       <p className="text-center text-sm text-muted-foreground">
-        لديك حساب بالفعل؟{" "}
+        عندك حساب أصلاً؟{" "}
         <Link href="/login" className="font-semibold text-primary hover:underline">
-          تسجيل الدخول
+          ادخل
         </Link>
       </p>
     </div>

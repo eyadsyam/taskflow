@@ -71,14 +71,14 @@ export function TaskKanban({
                   </Link>
                   <div className="text-xs text-muted-foreground mt-1 truncate">{t.client_name}</div>
                   <div className="flex items-center justify-between mt-2 text-xs">
-                    <span className="text-muted-foreground truncate">{assignee?.full_name ?? "بدون"}</span>
+                    <span className="text-muted-foreground truncate">{assignee?.full_name ?? "لسه"}</span>
                     <span className="font-medium">{formatCurrency(t.price, t.currency ?? "EGP")}</span>
                   </div>
                 </div>
               );
             })}
             {groupBy(s).length === 0 && (
-              <div className="text-xs text-muted-foreground text-center py-6">لا يوجد مهام في {STATUS_LABELS[s]}</div>
+              <div className="text-xs text-muted-foreground text-center py-6">مفيش حاجة هنا</div>
             )}
           </div>
         </div>

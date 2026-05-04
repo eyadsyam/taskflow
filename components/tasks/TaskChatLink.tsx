@@ -33,7 +33,7 @@ export function TaskChatLink({ taskId, taskTitle, existingConversationId }: Prop
       .from("conversations")
       .insert({
         type: "task",
-        name: `📋 ${taskTitle}`,
+        name: taskTitle,
         task_id: taskId,
         created_by: profile.id,
         icon: "list-checks",
@@ -44,7 +44,7 @@ export function TaskChatLink({ taskId, taskTitle, existingConversationId }: Prop
     setCreating(false);
     
     if (error || !data) {
-      toast.error("فشل إنشاء غرفة المحادثة");
+      toast.error("مقدرش يعمل غرفة شات");
       return;
     }
     
@@ -60,19 +60,19 @@ export function TaskChatLink({ taskId, taskTitle, existingConversationId }: Prop
           </div>
           <div>
             <h3 className="font-semibold">
-              {existingConversationId ? "محادثة المهمة" : "ابدأ محادثة لهذه المهمة"}
+              {existingConversationId ? "شات التاسك" : "اعمل شات للتاسك ده"}
             </h3>
             <p className="text-sm text-muted-foreground">
               {existingConversationId 
-                ? "استمر في النقاش حول هذه المهمة"
-                : "ناقش التفاصيل مع الفريق في مكان واحد"
+                ? "كمل الكلام عن التاسك ده"
+                : "اتكلم مع التيم في مكان واحد"
               }
             </p>
           </div>
         </div>
         <Button onClick={createOrOpen} disabled={creating} variant="gradient">
           {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowLeft className="h-4 w-4" />}
-          {existingConversationId ? "فتح المحادثة" : "إنشاء"}
+          {existingConversationId ? "افتح الشات" : "اعمله"}
         </Button>
       </CardContent>
     </Card>

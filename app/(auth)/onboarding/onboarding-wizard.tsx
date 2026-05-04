@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,8 +19,6 @@ import {
   ChevronLeft, 
   ChevronRight,
   Loader2,
-  Sparkles,
-  Camera
 } from "lucide-react";
 
 type Step = {
@@ -30,9 +29,9 @@ type Step = {
 };
 
 const STEPS: Step[] = [
-  { id: 1, title: "أهلاً بك!", description: "أخبرنا عن نفسك", icon: <User className="h-5 w-5" /> },
-  { id: 2, title: "ملفك المهني", description: "ما الذي تعمل عليه", icon: <Briefcase className="h-5 w-5" /> },
-  { id: 3, title: "كل شيء جاهز!", description: "دعنا نبدأ", icon: <Sparkles className="h-5 w-5" /> },
+  { id: 1, title: "قولنا عنك", description: "معلوماتك الأساسية", icon: <User className="h-5 w-5" /> },
+  { id: 2, title: "شغلك", description: "إنت بتعمل إيه", icon: <Briefcase className="h-5 w-5" /> },
+  { id: 3, title: "كله جاهز", description: "يلا نبدأ الشغل", icon: <CheckCircle2 className="h-5 w-5" /> },
 ];
 
 const TIMEZONES = [
@@ -40,7 +39,7 @@ const TIMEZONES = [
   { value: "Asia/Riyadh", label: "الرياض (GMT+3)" },
   { value: "Asia/Dubai", label: "دبي (GMT+4)" },
   { value: "Asia/Kuwait", label: "الكويت (GMT+3)" },
-  { value: "Africa/Casablanca", label: "الدار البيضاء (GMT+1)" },
+  { value: "Africa/Casablanca", label: "الدار البيضا (GMT+1)" },
   { value: "Europe/London", label: "لندن (GMT+0)" },
   { value: "America/New_York", label: "نيويورك (GMT-5)" },
 ];
@@ -151,11 +150,11 @@ export function OnboardingWizard({
     setSaving(false);
 
     if (error) {
-      toast.error("حدث خطأ في حفظ البيانات: " + error.message);
+      toast.error("في حاجة غلط: " + error.message);
       return;
     }
 
-    toast.success("تم إعداد حسابك بنجاح! 🎉");
+    toast.success("يلا، كله جاهز");
     router.replace("/dashboard");
     router.refresh();
   };
@@ -218,19 +217,19 @@ export function OnboardingWizard({
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="full_name">الاسم الكامل *</Label>
+                  <Label htmlFor="full_name">اسمك *</Label>
                   <Input
                     id="full_name"
                     value={data.full_name}
                     onChange={(e) => updateData("full_name", e.target.value)}
-                    placeholder="مثال: أحمد محمد"
+                    placeholder="اكتب اسمك"
                     className="h-12 text-base"
                     autoFocus
                   />
                 </div>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="phone">رقم الهاتف</Label>
+                    <Label htmlFor="phone">رقم موبايلك</Label>
                     <Input
                       id="phone"
                       type="tel"
@@ -242,7 +241,7 @@ export function OnboardingWizard({
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="timezone">المنطقة الزمنية</Label>
+                    <Label htmlFor="timezone">التوقيت بتاعك</Label>
                     <Select value={data.timezone} onValueChange={(v) => updateData("timezone", v)}>
                       <SelectTrigger className="h-12"><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -259,34 +258,34 @@ export function OnboardingWizard({
             {currentStep === 2 && (
               <div className="space-y-6 animate-slide-up">
                 <div className="space-y-2">
-                  <Label htmlFor="job_title">المسمى الوظيفي</Label>
+                  <Label htmlFor="job_title">وظيفتك</Label>
                   <Input
                     id="job_title"
                     value={data.job_title}
                     onChange={(e) => updateData("job_title", e.target.value)}
-                    placeholder="مثال: مدير مشاريع، مطور، مصمم"
+                    placeholder="مدير مشاريع، مطور، مصمم..."
                     className="h-12"
                   />
-                  <p className="text-xs text-muted-foreground">سيظهر هذا في ملفك الشخصي للأعضاء الآخرين</p>
+                  <p className="text-xs text-muted-foreground">ده اللي التيم هيشوفه في بروفايلك</p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="status_message">رسالة الحالة</Label>
+                  <Label htmlFor="status_message">إنت في إيه دلوقتي</Label>
                   <Input
                     id="status_message"
                     value={data.status_message}
                     onChange={(e) => updateData("status_message", e.target.value)}
-                    placeholder="مثال: مشغول بمشروع المتجر، متاح للمساعدة"
+                    placeholder="شغال على مشروع، فاضي للمساعدة..."
                     className="h-12"
                   />
-                  <p className="text-xs text-muted-foreground">أخبر الفريق عن حالتك الآن</p>
+                  <p className="text-xs text-muted-foreground">كلمة سريعة عن حالتك للتيم</p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="bio">نبذة عنك</Label>
+                  <Label htmlFor="bio">عرف نفسك</Label>
                   <Textarea
                     id="bio"
                     value={data.bio}
                     onChange={(e) => updateData("bio", e.target.value)}
-                    placeholder="نبذة قصيرة عن خبراتك ومهاراتك..."
+                    placeholder="قول عن خبراتك وشغلك..."
                     rows={4}
                     maxLength={500}
                   />
@@ -297,45 +296,27 @@ export function OnboardingWizard({
 
             {currentStep === 3 && (
               <div className="py-6 text-center space-y-6 animate-slide-up">
-                <div className="relative mx-auto w-32 h-32">
-                  <div className="absolute inset-0 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-full blur-2xl opacity-30 animate-pulse" />
-                  <div className="relative w-full h-full bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-full grid place-items-center shadow-2xl shadow-violet-500/30">
-                    <Sparkles className="h-16 w-16 text-white" />
-                  </div>
+                <div className="relative mx-auto w-40 h-40">
+                  <Image src="/assets/onboarding-done.svg" alt="" width={160} height={160} />
                 </div>
                 <div>
-                  <h3 className="text-3xl font-bold mb-2">مرحباً {data.full_name.split(" ")[0]}! 🎉</h3>
+                  <h3 className="text-3xl font-bold mb-2">أهلاً بيك يا {data.full_name.split(" ")[0]}</h3>
                   <p className="text-muted-foreground">
-                    حسابك جاهز. أنت الآن جزء من فريق العمل.
+                    حسابك جاهز. بقيت جزء من التيم.
                   </p>
                 </div>
                 
                 <div className="rounded-2xl bg-muted/50 p-4 text-right border border-border/50">
                   <h4 className="font-semibold mb-3 flex items-center gap-2">
                     <CheckCircle2 className="h-5 w-5 text-green-500" />
-                    ملخص بياناتك
+                    بياناتك
                   </h4>
                   <ul className="space-y-2 text-sm">
-                    <li className="flex justify-between"><span className="text-muted-foreground">الاسم:</span> <span className="font-medium">{data.full_name}</span></li>
-                    {data.job_title && <li className="flex justify-between"><span className="text-muted-foreground">المسمى:</span> <span className="font-medium">{data.job_title}</span></li>}
-                    {data.phone && <li className="flex justify-between"><span className="text-muted-foreground">الهاتف:</span> <span className="font-medium" dir="ltr">{data.phone}</span></li>}
-                    <li className="flex justify-between"><span className="text-muted-foreground">المنطقة الزمنية:</span> <span className="font-medium">{TIMEZONES.find(t => t.value === data.timezone)?.label}</span></li>
+                    <li className="flex justify-between"><span className="text-muted-foreground">الاسم</span> <span className="font-medium">{data.full_name}</span></li>
+                    {data.job_title && <li className="flex justify-between"><span className="text-muted-foreground">الوظيفة</span> <span className="font-medium">{data.job_title}</span></li>}
+                    {data.phone && <li className="flex justify-between"><span className="text-muted-foreground">الموبايل</span> <span className="font-medium" dir="ltr">{data.phone}</span></li>}
+                    <li className="flex justify-between"><span className="text-muted-foreground">التوقيت</span> <span className="font-medium">{TIMEZONES.find(t => t.value === data.timezone)?.label}</span></li>
                   </ul>
-                </div>
-
-                <div className="grid grid-cols-3 gap-3 text-sm">
-                  <div className="rounded-xl bg-primary/5 border border-primary/20 p-3">
-                    <div className="text-xl mb-1">💬</div>
-                    <div className="font-medium">محادثات لحظية</div>
-                  </div>
-                  <div className="rounded-xl bg-primary/5 border border-primary/20 p-3">
-                    <div className="text-xl mb-1">📋</div>
-                    <div className="font-medium">إدارة المهام</div>
-                  </div>
-                  <div className="rounded-xl bg-primary/5 border border-primary/20 p-3">
-                    <div className="text-xl mb-1">📎</div>
-                    <div className="font-medium">مشاركة الملفات</div>
-                  </div>
                 </div>
               </div>
             )}
@@ -352,7 +333,7 @@ export function OnboardingWizard({
             className="gap-2"
           >
             <ChevronRight className="h-4 w-4" />
-            السابق
+            رجوع
           </Button>
 
           {currentStep < STEPS.length ? (
@@ -363,7 +344,7 @@ export function OnboardingWizard({
               disabled={!canProceed()}
               className="gap-2 flex-1 sm:flex-none"
             >
-              التالي
+              كمل
               <ChevronLeft className="h-4 w-4" />
             </Button>
           ) : (
@@ -375,8 +356,7 @@ export function OnboardingWizard({
               className="gap-2 flex-1 sm:flex-none"
             >
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              ابدأ الآن
-              <Sparkles className="h-4 w-4" />
+              يلا نبدأ
             </Button>
           )}
         </div>

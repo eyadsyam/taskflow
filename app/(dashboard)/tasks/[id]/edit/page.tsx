@@ -20,7 +20,7 @@ export default async function EditTaskPage({ params }: { params: { id: string } 
   return (
     <div className="max-w-3xl mx-auto p-6">
       <Card>
-        <CardHeader><CardTitle>تعديل المهمة</CardTitle></CardHeader>
+        <CardHeader><CardTitle>عدل التاسك</CardTitle></CardHeader>
         <CardContent><TaskForm task={task as Task} workTeam={teamMembers} /></CardContent>
       </Card>
     </div>

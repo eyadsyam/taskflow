@@ -12,7 +12,7 @@ export default async function NewTaskPage() {
   return (
     <div className="max-w-3xl mx-auto p-6">
       <Card>
-        <CardHeader><CardTitle>مهمة جديدة</CardTitle></CardHeader>
+        <CardHeader><CardTitle>تاسك جديد</CardTitle></CardHeader>
         <CardContent><TaskForm workTeam={teamMembers} /></CardContent>
       </Card>
     </div>

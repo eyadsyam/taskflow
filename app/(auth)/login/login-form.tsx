@@ -23,8 +23,8 @@ export function LoginForm() {
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword(values);
     setLoading(false);
-    if (error) return toast.error(error.message || "فشل تسجيل الدخول");
-    toast.success("تم تسجيل الدخول");
+    if (error) return toast.error(error.message || "مقدرش يدخلك");
+    toast.success("أهلاً بيك");
     router.replace(next);
     router.refresh();
   }
@@ -45,7 +45,7 @@ export function LoginForm() {
     <div className="space-y-4">
       <Button type="button" variant="outline" className="w-full h-11" onClick={onGoogle} disabled={googleLoading}>
         {googleLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <GoogleIcon />}
-        تسجيل الدخول بـ Google
+        ادخل بـ Google
       </Button>
 
       <div className="relative">
@@ -53,20 +53,20 @@ export function LoginForm() {
           <span className="w-full border-t border-border" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-3 text-muted-foreground">أو ادخل ببريدك</span>
+          <span className="bg-background px-3 text-muted-foreground">أو بإيميلك</span>
         </div>
       </div>
 
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="email">البريد الإلكتروني</Label>
+          <Label htmlFor="email">الإيميل</Label>
           <Input id="email" type="email" placeholder="email@example.com" dir="ltr" autoComplete="email" {...form.register("email")} />
           {form.formState.errors.email && (
             <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
           )}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="password">كلمة السر</Label>
+          <Label htmlFor="password">الباسورد</Label>
           <Input id="password" type="password" placeholder="••••••" autoComplete="current-password" {...form.register("password")} />
           {form.formState.errors.password && (
             <p className="text-xs text-destructive">{form.formState.errors.password.message}</p>
@@ -74,7 +74,7 @@ export function LoginForm() {
         </div>
         <Button type="submit" variant="gradient" className="w-full h-11" disabled={loading}>
           {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-          تسجيل الدخول
+          دخول
         </Button>
       </form>
     </div>

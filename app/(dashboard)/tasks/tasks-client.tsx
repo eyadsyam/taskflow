@@ -95,18 +95,18 @@ export function TasksClient({ initialTasks, profiles }: { initialTasks: Task[]; 
     <div className="p-4 md:p-6 lg:p-8 space-y-6">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="text-3xl font-bold">المهام</h1>
-          <p className="text-muted-foreground mt-1">{filtered.length} مهمة</p>
+          <h1 className="text-3xl font-bold">التاسكات</h1>
+          <p className="text-muted-foreground mt-1">{filtered.length} تاسك</p>
         </div>
         <Button asChild variant="gradient">
-          <Link href="/tasks/new"><Plus className="h-4 w-4" /> مهمة جديدة</Link>
+          <Link href="/tasks/new"><Plus className="h-4 w-4" /> تاسك جديد</Link>
         </Button>
       </div>
 
       <div className="grid gap-3 md:grid-cols-[1fr_auto_auto_auto]">
         <div className="relative">
           <Search className="absolute top-1/2 -translate-y-1/2 start-3 h-4 w-4 text-muted-foreground pointer-events-none" />
-          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="ابحث في العنوان، العميل، الوصف..." className="ps-9" />
+          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="دور بالعنوان، العميل، أو التفاصيل..." className="ps-9" />
         </div>
         <Select value={status} onValueChange={setStatus}>
           <SelectTrigger className="md:w-56"><SelectValue /></SelectTrigger>
@@ -120,7 +120,7 @@ export function TasksClient({ initialTasks, profiles }: { initialTasks: Task[]; 
         <Select value={assignee} onValueChange={setAssignee}>
           <SelectTrigger className="md:w-56"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">كل الأشخاص</SelectItem>
+            <SelectItem value="all">كل التيم</SelectItem>
             {profiles.map((p) => (
               <SelectItem key={p.id} value={p.id}>{p.full_name}</SelectItem>
             ))}
@@ -131,7 +131,7 @@ export function TasksClient({ initialTasks, profiles }: { initialTasks: Task[]; 
       <Tabs value={view} onValueChange={(v) => setView(v as "table" | "kanban")}>
         <TabsList>
           <TabsTrigger value="table"><TableIcon className="h-4 w-4" /> جدول</TabsTrigger>
-          <TabsTrigger value="kanban"><LayoutGrid className="h-4 w-4" /> كانبان</TabsTrigger>
+          <TabsTrigger value="kanban"><LayoutGrid className="h-4 w-4" /> بورد</TabsTrigger>
         </TabsList>
         <TabsContent value="table">
           <TaskTable tasks={filtered} profileMap={profileMap} onStatusChange={changeStatus} />

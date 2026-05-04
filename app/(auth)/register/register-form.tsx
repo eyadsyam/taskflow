@@ -33,7 +33,7 @@ export function RegisterForm() {
     });
     setLoading(false);
     if (error) return toast.error(error.message);
-    toast.success("تم إنشاء الحساب! هيا نكمل إعداد ملفك الشخصي.");
+    toast.success("الحساب اتعمل! يلا نكمل بياناتك.");
     router.replace("/onboarding");
     router.refresh();
   }
@@ -51,33 +51,33 @@ export function RegisterForm() {
     <div className="space-y-4">
       <Button type="button" variant="outline" className="w-full h-11" onClick={onGoogle} disabled={googleLoading}>
         {googleLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <GoogleIcon />}
-        التسجيل عبر Google
+        سجل بـ Google
       </Button>
       <div className="relative">
         <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-3 text-muted-foreground">أو سجل بالبريد الإلكتروني</span>
+          <span className="bg-background px-3 text-muted-foreground">أو بإيميلك</span>
         </div>
       </div>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="full_name">الاسم الكامل</Label>
-          <Input id="full_name" {...form.register("full_name")} placeholder="أدخل اسمك الكامل" />
+          <Label htmlFor="full_name">اسمك</Label>
+          <Input id="full_name" {...form.register("full_name")} placeholder="اكتب اسمك" />
           {form.formState.errors.full_name && <p className="text-xs text-destructive">{form.formState.errors.full_name.message}</p>}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="email">البريد الإلكتروني</Label>
+          <Label htmlFor="email">الإيميل</Label>
           <Input id="email" type="email" {...form.register("email")} placeholder="email@example.com" dir="ltr" />
           {form.formState.errors.email && <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="password">كلمة السر</Label>
+          <Label htmlFor="password">الباسورد</Label>
           <Input id="password" type="password" {...form.register("password")} placeholder="6 حروف على الأقل" />
           {form.formState.errors.password && <p className="text-xs text-destructive">{form.formState.errors.password.message}</p>}
         </div>
         <Button type="submit" variant="gradient" className="w-full h-11" disabled={loading}>
           {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-          إنشاء الحساب
+          اعمل حسابي
         </Button>
       </form>
     </div>

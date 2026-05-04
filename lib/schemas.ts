@@ -8,9 +8,9 @@ export const TASK_STATUSES = [
 ] as const;
 
 export const taskSchema = z.object({
-  title: z.string().min(2, "العنوان مطلوب").max(200),
+  title: z.string().min(2, "اكتب عنوان").max(200),
   description: z.string().max(5000).optional().nullable(),
-  client_name: z.string().min(2, "اسم العميل مطلوب").max(120),
+  client_name: z.string().min(2, "اكتب اسم العميل").max(120),
   client_contact: z.string().max(80).optional().nullable(),
   status: z.enum(TASK_STATUSES),
   assigned_to: z.string().uuid().optional().nullable(),
@@ -24,20 +24,20 @@ export const taskSchema = z.object({
 export type TaskFormValues = z.infer<typeof taskSchema>;
 
 export const commentSchema = z.object({
-  content: z.string().min(1, "اكتب كومنت").max(4000),
+  content: z.string().min(1, "اكتب حاجة").max(4000),
   is_internal: z.boolean().default(false),
 });
 export type CommentFormValues = z.infer<typeof commentSchema>;
 
 export const loginSchema = z.object({
-  email: z.string().email("إيميل غير صالح"),
-  password: z.string().min(6, "كلمة السر 6 حروف على الأقل"),
+  email: z.string().email("الإيميل ده مش صح"),
+  password: z.string().min(6, "الباسورد 6 حروف على الأقل"),
 });
 export type LoginValues = z.infer<typeof loginSchema>;
 
 export const registerSchema = z.object({
-  full_name: z.string().min(2, "الاسم مطلوب").max(120),
-  email: z.string().email("إيميل غير صالح"),
-  password: z.string().min(6, "كلمة السر 6 حروف على الأقل"),
+  full_name: z.string().min(2, "اكتب اسمك").max(120),
+  email: z.string().email("الإيميل ده مش صح"),
+  password: z.string().min(6, "الباسورد 6 حروف على الأقل"),
 });
 export type RegisterValues = z.infer<typeof registerSchema>;

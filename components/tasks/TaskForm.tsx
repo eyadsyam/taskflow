@@ -100,13 +100,13 @@ export function TaskForm({ task, workTeam }: { task?: Task; workTeam: Profile[] 
           body: JSON.stringify({ task_id: task.id, old_status: oldStatus, new_status: values.status, changed_by: me.id }),
         }).catch(() => {});
       }
-      toast.success("تم الحفظ");
+      toast.success("اتحفظ");
       router.push(`/tasks/${task.id}`);
       router.refresh();
     } else {
       const { data, error } = await supabase.from("tasks").insert({ ...payload, created_by: me.id } as Record<string, unknown>).select("id").single();
       if (error) { setSubmitting(false); return toast.error(error.message); }
-      toast.success("تم إنشاء التاسك");
+      toast.success("التاسك اتعمل");
       router.push(`/tasks/${(data as { id: string }).id}`);
       router.refresh();
     }
@@ -116,12 +116,12 @@ export function TaskForm({ task, workTeam }: { task?: Task; workTeam: Profile[] 
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2">
         <Field label="عنوان التاسك" error={form.formState.errors.title?.message}>
-          <Input {...form.register("title")} placeholder="مثال: تصميم لوجو" />
+          <Input {...form.register("title")} placeholder="تصميم لوجو، تطوير موقع..." />
         </Field>
         <Field label="اسم العميل" error={form.formState.errors.client_name?.message}>
           <Input {...form.register("client_name")} />
         </Field>
-        <Field label="رقم واتساب / تواصل العميل">
+        <Field label="واتساب العميل">
           <Input {...form.register("client_contact")} placeholder="+2010..." dir="ltr" />
         </Field>
         <Field label="الحالة">
@@ -132,19 +132,19 @@ export function TaskForm({ task, workTeam }: { task?: Task; workTeam: Profile[] 
             </SelectContent>
           </Select>
         </Field>
-        <Field label="المنفذ">
+        <Field label="الشغال عليها">
           <Select
             value={form.watch("assigned_to") ?? "none"}
             onValueChange={(v) => form.setValue("assigned_to", v === "none" ? null : v)}
           >
-            <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder="اختار" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">بدون</SelectItem>
+              <SelectItem value="none">لسه</SelectItem>
               {workTeam.map((p) => (<SelectItem key={p.id} value={p.id}>{p.full_name}</SelectItem>))}
             </SelectContent>
           </Select>
         </Field>
-        <Field label="تاريخ التسليم">
+        <Field label="موعد التسليم">
           <Input type="date" {...form.register("due_date")} />
         </Field>
         <Field label="السعر">
@@ -163,8 +163,8 @@ export function TaskForm({ task, workTeam }: { task?: Task; workTeam: Profile[] 
         </Field>
       </div>
 
-      <Field label="الوصف">
-        <Textarea rows={5} {...form.register("description")} placeholder="تفاصيل المطلوب..." />
+      <Field label="التفاصيل">
+        <Textarea rows={5} {...form.register("description")} placeholder="اكتب تفاصيل الشغل المطلوب..." />
       </Field>
 
       <Field label="التاجات">
@@ -187,7 +187,7 @@ export function TaskForm({ task, workTeam }: { task?: Task; workTeam: Profile[] 
         />
       </Field>
 
-      <Field label="المرفقات (حتى 5 × 10MB)">
+      <Field label="الملفات">
         <div className="space-y-2">
           {attachments.map((url) => (
             <div key={url} className="flex items-center justify-between rounded border p-2 text-sm">
@@ -197,22 +197,20 @@ export function TaskForm({ task, workTeam }: { task?: Task; workTeam: Profile[] 
               </button>
             </div>
           ))}
-          {attachments.length < 5 && (
-            <label className="flex items-center justify-center gap-2 cursor-pointer border-2 border-dashed rounded-md p-4 text-sm text-muted-foreground hover:bg-accent">
-              {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-              {uploading ? "بيرفع..." : "ارفع ملفات"}
-              <input type="file" className="hidden" multiple onChange={(e) => onFiles(e.target.files)} />
-            </label>
-          )}
+          <label className="flex items-center justify-center gap-2 cursor-pointer border-2 border-dashed rounded-md p-4 text-sm text-muted-foreground hover:bg-accent">
+            {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+            {uploading ? "بيترفع..." : "ارفع ملفات"}
+            <input type="file" className="hidden" multiple onChange={(e) => onFiles(e.target.files)} />
+          </label>
         </div>
       </Field>
 
       <div className="flex justify-start gap-2">
-        <Button type="submit" disabled={submitting || uploading}>
+        <Button type="submit" variant="gradient" disabled={submitting || uploading}>
           {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-          {task ? "حفظ التعديلات" : "إنشاء التاسك"}
+          {task ? "احفظ" : "اعمل التاسك"}
         </Button>
-        <Button type="button" variant="outline" onClick={() => router.back()}>إلغاء</Button>
+        <Button type="button" variant="outline" onClick={() => router.back()}>لا</Button>
       </div>
     </form>
   );

@@ -58,7 +58,7 @@ export function ChatSidebar({ channels, dms, teamMembers, currentUserId }: Props
     if (dmId) {
       router.push(`/chat/${dmId}`);
     } else {
-      toast.error("فشل بدء المحادثة");
+      toast.error("مقدرش يفتح المحادثة");
     }
   }
 
@@ -67,7 +67,7 @@ export function ChatSidebar({ channels, dms, teamMembers, currentUserId }: Props
       {/* Header */}
       <div className="p-4 border-b border-sidebar-border">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-bold text-lg">المحادثات</h2>
+          <h2 className="font-bold text-lg">الشات</h2>
           <NewChannelDialog 
             open={newChannelOpen} 
             onOpenChange={setNewChannelOpen} 
@@ -82,7 +82,7 @@ export function ChatSidebar({ channels, dms, teamMembers, currentUserId }: Props
         <div className="relative">
           <Search className="absolute end-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
           <Input
-            placeholder="بحث..."
+            placeholder="دور على حاجة..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pe-10 h-9 text-sm"
@@ -119,7 +119,7 @@ export function ChatSidebar({ channels, dms, teamMembers, currentUserId }: Props
                 </Link>
               ))}
               {filteredChannels.length === 0 && (
-                <div className="px-2.5 py-1 text-xs text-muted-foreground">لا توجد قنوات</div>
+                <div className="px-2.5 py-1 text-xs text-muted-foreground">مفيش قنوات</div>
               )}
             </div>
           )}
@@ -133,7 +133,7 @@ export function ChatSidebar({ channels, dms, teamMembers, currentUserId }: Props
               className="flex items-center gap-1 w-full px-2 py-1 text-xs font-semibold uppercase text-muted-foreground hover:text-foreground"
             >
               {showDMs ? <ChevronDown className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
-              <span>الرسائل المباشرة ({dms.length})</span>
+              <span>رسايل خاصة ({dms.length})</span>
             </button>
             {showDMs && (
               <div className="mt-1 space-y-0.5">
@@ -152,7 +152,7 @@ export function ChatSidebar({ channels, dms, teamMembers, currentUserId }: Props
             className="flex items-center gap-1 w-full px-2 py-1 text-xs font-semibold uppercase text-muted-foreground hover:text-foreground"
           >
             {showMembers ? <ChevronDown className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
-            <span>أعضاء الفريق ({members.length})</span>
+            <span>التيم ({members.length})</span>
           </button>
           {showMembers && (
             <div className="mt-1 space-y-0.5">
@@ -176,7 +176,7 @@ export function ChatSidebar({ channels, dms, teamMembers, currentUserId }: Props
                 );
               })}
               {filteredMembers.length === 0 && (
-                <div className="px-2 py-1 text-xs text-muted-foreground">لا أعضاء آخرون</div>
+                <div className="px-2 py-1 text-xs text-muted-foreground">مفيش حد تاني</div>
               )}
             </div>
           )}
@@ -244,7 +244,7 @@ function NewChannelDialog({
   const [creating, setCreating] = useState(false);
 
   async function handleCreate() {
-    if (!name.trim()) return toast.error("اسم القناة مطلوب");
+    if (!name.trim()) return toast.error("اكتب اسم للقناة الأول");
     setCreating(true);
     const supabase = createClient();
     const { data, error } = await supabase
@@ -260,9 +260,9 @@ function NewChannelDialog({
       .single();
     setCreating(false);
     if (error || !data) {
-      return toast.error("فشل إنشاء القناة");
+      return toast.error("مقدرش يعمل القناة");
     }
-    toast.success("تم إنشاء القناة");
+    toast.success("اتعملت");
     setName("");
     setDescription("");
     onCreated((data as Conversation).id);
@@ -277,28 +277,28 @@ function NewChannelDialog({
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>إنشاء قناة جديدة</DialogTitle>
+          <DialogTitle>قناة جديدة</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">اسم القناة</label>
             <Input
-              placeholder="مثال: المشاريع، التصميم، التطوير"
+              placeholder="مشاريع، تصميم، تطوير..."
               value={name}
               onChange={(e) => setName(e.target.value)}
               autoFocus
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">الوصف (اختياري)</label>
+            <label className="text-sm font-medium">الوصف (لو حابب)</label>
             <Input
-              placeholder="ما الغرض من هذه القناة؟"
+              placeholder="القناة دي بتاعت إيه؟"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
           </div>
           <Button variant="gradient" onClick={handleCreate} disabled={creating} className="w-full">
-            {creating ? "جاري الإنشاء..." : "إنشاء القناة"}
+            {creating ? "بيعمل..." : "اعمل القناة"}
           </Button>
         </div>
       </DialogContent>

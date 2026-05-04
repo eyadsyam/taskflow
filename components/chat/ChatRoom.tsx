@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Hash, Users, Info, Phone, Video, Search, MoreVertical } from "lucide-react";
+import { Hash, Info, Search, MoreVertical, Lock } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { ChatMessageList } from "./ChatMessageList";
 import { ChatInput } from "./ChatInput";
@@ -147,8 +147,8 @@ export function ChatRoom({ conversation, members, allMembers, initialMessages, c
                 <h2 className="font-semibold">{dmPartner.full_name}</h2>
                 <div className="text-xs text-muted-foreground">
                   {getUserStatus(dmPartner.last_seen_at) === "online" 
-                    ? <span className="text-green-600 dark:text-green-400">● متصل الآن</span>
-                    : dmPartner.status_message || dmPartner.job_title || "غير متصل"
+                    ? <span className="text-green-600 dark:text-green-400">أونلاين</span>
+                    : dmPartner.status_message || dmPartner.job_title || "مش هنا"
                   }
                 </div>
               </div>
@@ -161,7 +161,7 @@ export function ChatRoom({ conversation, members, allMembers, initialMessages, c
               <div>
                 <h2 className="font-semibold flex items-center gap-2">
                   {conversation.name}
-                  {conversation.is_private && <span className="text-xs text-muted-foreground">🔒</span>}
+                  {conversation.is_private && <Lock className="h-3 w-3 text-muted-foreground" />}
                 </h2>
                 <div className="text-xs text-muted-foreground">
                   {conversation.description || `${allMembers.length} عضو`}
@@ -171,10 +171,10 @@ export function ChatRoom({ conversation, members, allMembers, initialMessages, c
           )}
         </div>
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" title="بحث في المحادثة">
+          <Button variant="ghost" size="icon" title="دور في المحادثة">
             <Search className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" title="معلومات">
+          <Button variant="ghost" size="icon" title="تفاصيل">
             <Info className="h-4 w-4" />
           </Button>
           <Button variant="ghost" size="icon" title="المزيد">

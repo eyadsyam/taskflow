@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Menu, Plus, Sun, Moon, Users, LayoutDashboard, ListChecks, MessageCircle, Search, X, Sparkles } from "lucide-react";
+import { Menu, Plus, Sun, Moon, Users, LayoutDashboard, ListChecks, MessageCircle, Search, X } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -9,9 +10,9 @@ import { cn } from "@/lib/utils";
 
 const NAV = [
   { href: "/dashboard", label: "الرئيسية", icon: LayoutDashboard },
-  { href: "/chat", label: "المحادثات", icon: MessageCircle },
-  { href: "/tasks", label: "المهام", icon: ListChecks },
-  { href: "/team", label: "الفريق", icon: Users },
+  { href: "/chat", label: "الشات", icon: MessageCircle },
+  { href: "/tasks", label: "التاسكات", icon: ListChecks },
+  { href: "/team", label: "التيم", icon: Users },
 ];
 
 export function Header() {
@@ -30,9 +31,7 @@ export function Header() {
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-violet-600 to-fuchsia-600 grid place-items-center">
-              <Sparkles className="h-4 w-4 text-white" />
-            </div>
+            <Image src="/assets/logo.svg" alt="TaskFlow" width={32} height={32} priority />
             <div className="font-bold">TaskFlow</div>
           </div>
         </div>
@@ -43,7 +42,7 @@ export function Header() {
             <Search className="absolute end-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             <input
               type="search"
-              placeholder="ابحث عن مهام، رسائل، أعضاء..."
+              placeholder="دور على حاجة..."
               className="w-full h-10 rounded-lg border border-border bg-muted/30 pe-10 ps-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all"
             />
           </div>
@@ -51,10 +50,10 @@ export function Header() {
         
         <div className="flex items-center gap-2">
           <Button asChild size="sm" variant="gradient" className="hidden md:inline-flex">
-            <Link href="/tasks/new"><Plus className="h-4 w-4" /> مهمة</Link>
+            <Link href="/tasks/new"><Plus className="h-4 w-4" /> تاسك</Link>
           </Button>
           {mounted && (
-            <Button variant="ghost" size="icon" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} title="تبديل المظهر">
+            <Button variant="ghost" size="icon" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} title="غير المود">
               {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
           )}
@@ -87,11 +86,11 @@ export function Header() {
             onClick={() => setOpen(false)} 
             className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white"
           >
-            <Plus className="h-4 w-4" /> مهمة جديدة
+            <Plus className="h-4 w-4" /> تاسك جديد
           </Link>
           <form action="/auth/signout" method="post" className="pt-2 border-t border-border">
             <button className="w-full text-right rounded-lg px-3 py-2.5 text-sm text-destructive hover:bg-accent">
-              تسجيل الخروج
+              خروج
             </button>
           </form>
         </nav>

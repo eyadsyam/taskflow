@@ -7,10 +7,10 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export const STATUS_LABELS: Record<TaskStatus, string> = {
-  pending_client: "مستني رد العميل",
+  pending_client: "مستني العميل",
   in_progress: "شغالين عليها",
   done_pending_payment: "خلصت - مستنيين الفلوس",
-  paid_closed: "مغلق / مدفوع",
+  paid_closed: "مقفولة - اتدفعت",
 };
 
 export const STATUS_COLORS: Record<TaskStatus, string> = {
@@ -29,7 +29,7 @@ export const STATUS_ORDER: TaskStatus[] = [
 
 export const ROLE_LABELS: Record<UserRole, string> = {
   admin: "مسؤول",
-  member: "عضو",
+  member: "عضو التيم",
 };
 
 export function formatCurrency(amount: number | null, currency = "EGP"): string {
@@ -72,13 +72,13 @@ export function relativeTime(d: string | null | undefined): string {
   if (!d) return "—";
   const diff = Date.now() - new Date(d).getTime();
   const sec = Math.round(diff / 1000);
-  if (sec < 60) return "الآن";
+  if (sec < 60) return "دلوقتي";
   const min = Math.round(sec / 60);
-  if (min < 60) return `منذ ${min} د`;
+  if (min < 60) return `من ${min} د`;
   const hr = Math.round(min / 60);
-  if (hr < 24) return `منذ ${hr} س`;
+  if (hr < 24) return `من ${hr} س`;
   const day = Math.round(hr / 24);
-  if (day < 7) return `منذ ${day} يوم`;
+  if (day < 7) return `من ${day} يوم`;
   return formatDate(d);
 }
 
@@ -135,7 +135,7 @@ export function formatMessageTime(d: string): string {
     return date.toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
   }
   if (isYesterday) {
-    return "أمس " + date.toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
+    return "إمبارح " + date.toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
   }
   return date.toLocaleString("ar-EG", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 }
@@ -158,7 +158,7 @@ export function getDateLabel(dateStr: string): string {
   yesterday.setDate(yesterday.getDate() - 1);
   const isYesterday = date.toDateString() === yesterday.toDateString();
   
-  if (isToday) return "اليوم";
-  if (isYesterday) return "أمس";
+  if (isToday) return "النهاردة";
+  if (isYesterday) return "إمبارح";
   return date.toLocaleDateString("ar-EG", { weekday: "long", day: "numeric", month: "long" });
 }

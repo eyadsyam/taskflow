@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Lock, Pencil, User, Calendar, Tag, Phone, Paperclip, MessageCircle } from "lucide-react";
+import { Lock, Pencil, User, Calendar, Tag, Phone, Paperclip } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import type { Profile, Task, Conversation } from "@/lib/database.types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,7 +36,7 @@ export default async function TaskDetailPage({ params }: { params: { id: string 
         <div className="rounded-xl border border-green-500/40 bg-green-500/10 p-4 flex items-center gap-3">
           <Lock className="h-5 w-5 text-green-600" />
           <div className="text-sm text-green-900 dark:text-green-400">
-            🔒 هذه المهمة مغلقة — العميل دفع واستلم. لا يمكن التعديل.
+            التاسك ده مقفول - العميل دفع واستلم. مش هينفع تعدله.
           </div>
         </div>
       )}
@@ -54,7 +54,7 @@ export default async function TaskDetailPage({ params }: { params: { id: string 
             <StatusChanger task={t} />
             {!locked && (
               <Button asChild variant="outline" size="sm">
-                <Link href={`/tasks/${t.id}/edit`}><Pencil className="h-4 w-4" /> تعديل</Link>
+                <Link href={`/tasks/${t.id}/edit`}><Pencil className="h-4 w-4" /> عدل</Link>
               </Button>
             )}
           </div>
@@ -62,7 +62,7 @@ export default async function TaskDetailPage({ params }: { params: { id: string 
         <CardContent className="space-y-6">
           {t.description && (
             <div>
-              <div className="text-sm font-semibold mb-2">الوصف</div>
+              <div className="text-sm font-semibold mb-2">التفاصيل</div>
               <div className="text-sm whitespace-pre-wrap text-muted-foreground leading-relaxed bg-muted/50 rounded-lg p-3">
                 {t.description}
               </div>
@@ -70,16 +70,16 @@ export default async function TaskDetailPage({ params }: { params: { id: string 
           )}
 
           <div className="grid sm:grid-cols-2 gap-4">
-            <InfoBox icon={User} label="المنفّذ">
+            <InfoBox icon={User} label="الشغال عليها">
               {assignee ? (
                 <div className="flex items-center gap-2">
                   <UserAvatar name={assignee.full_name} src={assignee.avatar_url} size="sm" />
                   <span className="font-medium">{assignee.full_name}</span>
                 </div>
-              ) : <span className="text-muted-foreground">لم يتم تعيين</span>}
+              ) : <span className="text-muted-foreground">لسه متعينش</span>}
             </InfoBox>
             
-            <InfoBox icon={User} label="أنشأها">
+            <InfoBox icon={User} label="عملها">
               {creator ? (
                 <div className="flex items-center gap-2">
                   <UserAvatar name={creator.full_name} src={creator.avatar_url} size="sm" />
@@ -92,7 +92,7 @@ export default async function TaskDetailPage({ params }: { params: { id: string 
               <span className="font-medium">{formatDate(t.due_date)}</span>
             </InfoBox>
             
-            <InfoBox icon={Phone} label="تواصل العميل">
+            <InfoBox icon={Phone} label="تليفون العميل">
               <span className="font-medium" dir="ltr">{t.client_contact ?? "—"}</span>
             </InfoBox>
             
@@ -100,14 +100,14 @@ export default async function TaskDetailPage({ params }: { params: { id: string 
               <span className="font-medium text-lg">{formatCurrency(t.price, t.currency ?? "EGP")}</span>
             </InfoBox>
             
-            <InfoBox icon={Calendar} label="تاريخ الإنشاء">
+            <InfoBox icon={Calendar} label="اتعملت في">
               <span className="font-medium">{formatDate(t.created_at)}</span>
             </InfoBox>
           </div>
 
           {(t.tags?.length ?? 0) > 0 && (
             <div>
-              <div className="text-sm font-semibold mb-2">التاجات</div>
+              <div className="text-sm font-semibold mb-2">تاجات</div>
               <div className="flex flex-wrap gap-1.5">
                 {t.tags!.map((tag) => (
                   <span key={tag} className="rounded-full bg-primary/10 text-primary px-3 py-1 text-xs font-medium">
@@ -120,7 +120,7 @@ export default async function TaskDetailPage({ params }: { params: { id: string 
 
           {(t.attachments?.length ?? 0) > 0 && (
             <div>
-              <div className="text-sm font-semibold mb-2 flex items-center gap-1.5"><Paperclip className="h-4 w-4" /> المرفقات</div>
+              <div className="text-sm font-semibold mb-2 flex items-center gap-1.5"><Paperclip className="h-4 w-4" /> الملفات</div>
               <div className="space-y-2">
                 {t.attachments!.map((url) => (
                   <a key={url} href={url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm rounded-lg border p-3 hover:bg-accent transition-colors truncate">

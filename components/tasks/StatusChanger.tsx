@@ -25,7 +25,7 @@ export function StatusChanger({ task }: { task: Task }) {
       setStatus(prev);
       return toast.error(error.message);
     }
-    toast.success("تم تحديث الحالة");
+    toast.success("اتغيرت");
     const session = (await supabase.auth.getSession()).data.session;
     fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/on-task-status-change`, {
       method: "POST",

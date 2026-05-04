@@ -84,8 +84,8 @@ export function ChatMessageList({ messages, currentUserId, onReply, typingUsers 
           </div>
           <span className="text-xs text-muted-foreground">
             {typingUsers.length === 1 
-              ? `${typingUsers[0]} يكتب...`
-              : `${typingUsers.length} أشخاص يكتبون...`
+              ? `${typingUsers[0]} بيكتب...`
+              : `${typingUsers.length} ناس بيكتبوا...`
             }
           </span>
         </div>
@@ -100,12 +100,12 @@ function EmptyState() {
   return (
     <div className="h-full flex items-center justify-center">
       <div className="text-center space-y-3 max-w-sm">
-        <div className="mx-auto h-16 w-16 rounded-2xl bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 grid place-items-center">
-          <span className="text-4xl">👋</span>
+        <div className="mx-auto mb-2 text-muted-foreground/40">
+          <img src="/assets/empty-chat.svg" alt="" width={200} height={160} className="mx-auto" />
         </div>
-        <h3 className="text-lg font-semibold">لا توجد رسائل بعد</h3>
+        <h3 className="text-lg font-semibold">مفيش رسايل لسه</h3>
         <p className="text-sm text-muted-foreground">
-          ابدأ المحادثة بكتابة رسالة في الأسفل
+          ابدأ الكلام واكتب تحت
         </p>
       </div>
     </div>

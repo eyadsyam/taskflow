@@ -95,10 +95,10 @@ export function ChatInput({ conversationId, currentUserId, replyTo, onCancelRepl
         setFiles([]);
         onCancelReply();
       } else {
-        toast.error("فشل إرسال الرسالة");
+        toast.error("مقدرش يبعت");
       }
     } catch (e) {
-      toast.error("حدث خطأ في الإرسال");
+      toast.error("في حاجة غلط");
       console.error(e);
     } finally {
       setSending(false);
@@ -151,8 +151,8 @@ export function ChatInput({ conversationId, currentUserId, replyTo, onCancelRepl
         {replyTo && (
           <div className="flex items-start justify-between gap-2 mb-2 p-3 rounded-lg bg-muted/50 border-r-4 border-primary">
             <div className="flex-1 min-w-0">
-              <div className="text-xs font-medium text-primary mb-0.5">الرد على {replyTo.author.full_name}</div>
-              <div className="text-sm text-muted-foreground truncate">{replyTo.content || "مرفق"}</div>
+              <div className="text-xs font-medium text-primary mb-0.5">رد على {replyTo.author.full_name}</div>
+              <div className="text-sm text-muted-foreground truncate">{replyTo.content || "ملف"}</div>
             </div>
             <Button variant="ghost" size="icon-sm" onClick={onCancelReply}>
               <X className="h-4 w-4" />
@@ -205,7 +205,7 @@ export function ChatInput({ conversationId, currentUserId, replyTo, onCancelRepl
             size="icon-sm" 
             onClick={() => fileInputRef.current?.click()}
             disabled={sending}
-            title="إرفاق ملف"
+            title="ارفع ملف"
           >
             <Paperclip className="h-5 w-5" />
           </Button>
@@ -230,7 +230,7 @@ export function ChatInput({ conversationId, currentUserId, replyTo, onCancelRepl
             }}
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}
-            placeholder="اكتب رسالة..."
+            placeholder="اكتب..."
             rows={1}
             className="flex-1 resize-none bg-transparent border-0 px-2 py-2 text-sm placeholder:text-muted-foreground focus:outline-none scrollbar-thin"
             style={{ maxHeight: "200px" }}
@@ -265,7 +265,7 @@ export function ChatInput({ conversationId, currentUserId, replyTo, onCancelRepl
             size="icon-sm"
             onClick={handleSend}
             disabled={sending || (!message.trim() && files.length === 0)}
-            title="إرسال"
+            title="ابعت"
           >
             {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           </Button>
@@ -273,11 +273,11 @@ export function ChatInput({ conversationId, currentUserId, replyTo, onCancelRepl
         
         <div className="mt-1 flex items-center justify-between px-2">
           <p className="text-xs text-muted-foreground">
-            <kbd className="px-1.5 py-0.5 rounded bg-muted text-xs">Enter</kbd> للإرسال • <kbd className="px-1.5 py-0.5 rounded bg-muted text-xs">Shift+Enter</kbd> سطر جديد
+            <kbd className="px-1.5 py-0.5 rounded bg-muted text-xs">Enter</kbd> عشان تبعت • <kbd className="px-1.5 py-0.5 rounded bg-muted text-xs">Shift+Enter</kbd> سطر جديد
           </p>
           {sending && uploadProgress > 0 && (
             <p className="text-xs text-muted-foreground">
-              جاري الرفع: {uploadProgress}%
+              بيترفع: {uploadProgress}%
             </p>
           )}
         </div>

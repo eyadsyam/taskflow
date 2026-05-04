@@ -45,16 +45,16 @@ export function ChatMessage({ message, isOwn, currentUserId, showAvatar, onReply
   }
 
   async function handleDelete() {
-    if (!confirm("هل أنت متأكد من حذف هذه الرسالة؟")) return;
+    if (!confirm("متأكد عايز تمسح الرسالة؟")) return;
     await deleteMessage(message.id);
-    toast.success("تم حذف الرسالة");
+    toast.success("اتمسحت");
   }
 
   async function handleSaveEdit() {
     if (!editValue.trim()) return;
     await editMessage(message.id, editValue.trim());
     setIsEditing(false);
-    toast.success("تم تعديل الرسالة");
+    toast.success("اتعدلت");
   }
 
   return (
@@ -82,7 +82,7 @@ export function ChatMessage({ message, isOwn, currentUserId, showAvatar, onReply
           <div className="flex items-baseline gap-2 mb-1">
             <span className="font-semibold text-sm">{message.author.full_name}</span>
             <span className="text-xs text-muted-foreground">{formatTime(message.created_at)}</span>
-            {message.is_edited && <span className="text-xs text-muted-foreground italic">(معدّل)</span>}
+            {message.is_edited && <span className="text-xs text-muted-foreground italic">(اتعدل)</span>}
           </div>
         )}
 
@@ -99,8 +99,8 @@ export function ChatMessage({ message, isOwn, currentUserId, showAvatar, onReply
               className="flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm"
               autoFocus
             />
-            <Button size="sm" onClick={handleSaveEdit}>حفظ</Button>
-            <Button size="sm" variant="ghost" onClick={() => setIsEditing(false)}>إلغاء</Button>
+            <Button size="sm" onClick={handleSaveEdit}>احفظ</Button>
+            <Button size="sm" variant="ghost" onClick={() => setIsEditing(false)}>لا</Button>
           </div>
         ) : (
           <>
@@ -150,7 +150,7 @@ export function ChatMessage({ message, isOwn, currentUserId, showAvatar, onReply
       <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-start gap-0.5 self-start">
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="ghost" size="icon-sm" title="إضافة تفاعل">
+            <Button variant="ghost" size="icon-sm" title="ريأكشن">
               <Smile className="h-4 w-4" />
             </Button>
           </PopoverTrigger>
@@ -169,7 +169,7 @@ export function ChatMessage({ message, isOwn, currentUserId, showAvatar, onReply
           </PopoverContent>
         </Popover>
         
-        <Button variant="ghost" size="icon-sm" onClick={() => onReply(message)} title="رد">
+        <Button variant="ghost" size="icon-sm" onClick={() => onReply(message)} title="رد عليه">
           <Reply className="h-4 w-4" />
         </Button>
         
@@ -183,11 +183,11 @@ export function ChatMessage({ message, isOwn, currentUserId, showAvatar, onReply
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => setIsEditing(true)}>
                 <Edit2 className="h-4 w-4" />
-                تعديل
+                عدل
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleDelete} className="text-destructive">
                 <Trash2 className="h-4 w-4" />
-                حذف
+                امسح
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

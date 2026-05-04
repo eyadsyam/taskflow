@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import type { Task, Profile } from "@/lib/database.types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -62,15 +63,15 @@ export default async function DashboardPage() {
         </div>
         <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold">أهلاً بك في فريقك! 👋</h1>
-            <p className="text-white/80 mt-2 text-lg">{onlineMembers.length} عضو متصل الآن • {profiles.length} في الفريق</p>
+            <h1 className="text-3xl md:text-4xl font-bold">نورت يا تيم</h1>
+            <p className="text-white/80 mt-2 text-lg">{onlineMembers.length} أونلاين دلوقتي من {profiles.length}</p>
           </div>
           <div className="flex items-center gap-2">
             <Button asChild variant="secondary" size="lg">
-              <Link href="/chat"><MessageCircle className="h-5 w-5" /> الدردشة</Link>
+              <Link href="/chat"><MessageCircle className="h-5 w-5" /> الشات</Link>
             </Button>
             <Button asChild size="lg" className="bg-white text-violet-700 hover:bg-white/90">
-              <Link href="/tasks/new"><Plus className="h-5 w-5" /> مهمة جديدة</Link>
+              <Link href="/tasks/new"><Plus className="h-5 w-5" /> تاسك جديد</Link>
             </Button>
           </div>
         </div>
@@ -80,28 +81,28 @@ export default async function DashboardPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Kpi 
           icon={ListChecks} 
-          label="مهام نشطة" 
+          label="تاسكات شغالة" 
           value={active} 
           color="text-blue-600 dark:text-blue-400"
           bg="bg-blue-100 dark:bg-blue-900/30"
         />
         <Kpi 
           icon={Wallet} 
-          label="بانتظار الدفع" 
+          label="مستنيين الفلوس" 
           value={pendingPayment} 
           color="text-amber-600 dark:text-amber-400"
           bg="bg-amber-100 dark:bg-amber-900/30"
         />
         <Kpi 
           icon={CheckCircle2} 
-          label="منجزة هذا الشهر" 
+          label="خلصوا الشهر ده" 
           value={doneThisMonth} 
           color="text-green-600 dark:text-green-400"
           bg="bg-green-100 dark:bg-green-900/30"
         />
         <Kpi 
           icon={Activity} 
-          label="متصلون الآن" 
+          label="أونلاين" 
           value={onlineMembers.length} 
           subtitle={`من ${profiles.length}`}
           color="text-violet-600 dark:text-violet-400"
@@ -119,7 +120,7 @@ export default async function DashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
-              الفريق
+              التيم
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -136,14 +137,14 @@ export default async function DashboardPage() {
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium truncate">{p.full_name}</div>
                     <div className="text-xs text-muted-foreground truncate">
-                      {p.status_message || p.job_title || (status === "online" ? "متصل" : "غير متصل")}
+                      {p.status_message || p.job_title || (status === "online" ? "أونلاين" : "مش هنا")}
                     </div>
                   </div>
                 </div>
               );
             })}
             <Button asChild variant="ghost" size="sm" className="w-full justify-center mt-2">
-              <Link href="/team">عرض الكل <ArrowLeft className="h-4 w-4" /></Link>
+              <Link href="/team">شوف الكل <ArrowLeft className="h-4 w-4" /></Link>
             </Button>
           </CardContent>
         </Card>
@@ -154,22 +155,22 @@ export default async function DashboardPage() {
         <CardHeader className="flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
-            آخر المهام
+            آخر التاسكات
           </CardTitle>
           <Button asChild variant="ghost" size="sm">
-            <Link href="/tasks">عرض الكل <ArrowLeft className="h-4 w-4" /></Link>
+            <Link href="/tasks">شوف الكل <ArrowLeft className="h-4 w-4" /></Link>
           </Button>
         </CardHeader>
         <CardContent className="space-y-2">
           {recent.length === 0 ? (
             <div className="py-12 text-center">
-              <div className="mx-auto h-16 w-16 rounded-2xl bg-primary/10 grid place-items-center mb-3">
-                <ListChecks className="h-8 w-8 text-primary" />
+              <div className="mx-auto mb-4 opacity-70 text-muted-foreground">
+                <Image src="/assets/empty-tasks.svg" alt="" width={200} height={160} className="mx-auto" />
               </div>
-              <p className="font-medium">لا توجد مهام بعد</p>
-              <p className="text-sm text-muted-foreground mt-1 mb-4">ابدأ بإنشاء مهمتك الأولى</p>
+              <p className="font-medium">مفيش تاسكات لسه</p>
+              <p className="text-sm text-muted-foreground mt-1 mb-4">ابدأ بأول تاسك ليك</p>
               <Button asChild variant="gradient">
-                <Link href="/tasks/new"><Plus className="h-4 w-4" /> مهمة جديدة</Link>
+                <Link href="/tasks/new"><Plus className="h-4 w-4" /> تاسك جديد</Link>
               </Button>
             </div>
           ) : (

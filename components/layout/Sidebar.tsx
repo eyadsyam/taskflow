@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, ListChecks, MessageCircle, Users, Settings, LogOut, Plus, Sparkles } from "lucide-react";
+import { LayoutDashboard, ListChecks, MessageCircle, Users, Settings, LogOut, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useProfile } from "@/components/profile-context";
@@ -10,9 +11,9 @@ import { ROLE_LABELS } from "@/lib/utils";
 
 const NAV = [
   { href: "/dashboard", label: "الرئيسية", icon: LayoutDashboard },
-  { href: "/chat", label: "المحادثات", icon: MessageCircle, badge: true },
-  { href: "/tasks", label: "المهام", icon: ListChecks },
-  { href: "/team", label: "الفريق", icon: Users },
+  { href: "/chat", label: "الشات", icon: MessageCircle },
+  { href: "/tasks", label: "التاسكات", icon: ListChecks },
+  { href: "/team", label: "التيم", icon: Users },
 ];
 
 export function Sidebar() {
@@ -21,22 +22,19 @@ export function Sidebar() {
 
   return (
     <aside className="hidden lg:flex fixed right-0 top-0 h-screen w-72 flex-col bg-sidebar border-s border-sidebar-border">
-      {/* Logo / Brand */}
+      {/* Logo */}
       <div className="flex items-center gap-3 px-5 py-5 border-b border-sidebar-border">
-        <div className="relative h-10 w-10 rounded-xl bg-gradient-to-br from-violet-600 to-fuchsia-600 grid place-items-center shadow-lg shadow-violet-500/30">
-          <Sparkles className="h-5 w-5 text-white" />
-          <div className="absolute inset-0 rounded-xl bg-white/20 blur-md -z-10" />
-        </div>
+        <Image src="/assets/logo.svg" alt="TaskFlow" width={36} height={36} priority />
         <div>
           <div className="font-bold text-lg leading-tight">TaskFlow</div>
-          <div className="text-xs text-muted-foreground">منصة الفريق</div>
+          <div className="text-xs text-muted-foreground">منصة التيم</div>
         </div>
       </div>
 
       {/* Quick Action */}
       <div className="px-3 pt-4">
         <Button asChild variant="gradient" className="w-full">
-          <Link href="/tasks/new"><Plus className="h-4 w-4" /> مهمة جديدة</Link>
+          <Link href="/tasks/new"><Plus className="h-4 w-4" /> تاسك جديد</Link>
         </Button>
       </div>
 
@@ -56,9 +54,8 @@ export function Sidebar() {
                   : "text-muted-foreground hover:bg-accent hover:text-foreground"
               )}
             >
-              <Icon className={cn("h-4 w-4 transition-transform", active ? "" : "group-hover:scale-110")} />
+              <Icon className="h-4 w-4" />
               <span className="flex-1">{item.label}</span>
-              {active && <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white/30 rounded-l-full" />}
             </Link>
           );
         })}
@@ -88,7 +85,7 @@ export function Sidebar() {
             </div>
           </div>
           <form action="/auth/signout" method="post">
-            <Button type="submit" variant="ghost" size="icon-sm" title="تسجيل الخروج" className="text-muted-foreground hover:text-destructive">
+            <Button type="submit" variant="ghost" size="icon-sm" title="خروج" className="text-muted-foreground hover:text-destructive">
               <LogOut className="h-4 w-4" />
             </Button>
           </form>
