@@ -6,7 +6,15 @@
       "Exec(curl)",
       "Exec(npm run)",
       "Exec(git init)",
-      "Exec(git add)"
+      "Exec(git add)",
+      "Exec(git commit)",
+      "Exec(git config)",
+      "Exec(cat)",
+      "Exec(npm install)",
+      "Exec(npx vercel)",
+      "Exec(gh auth)",
+      "Exec(gh repo)",
+      "Exec(npx tsc)"
     ]
   }
 }

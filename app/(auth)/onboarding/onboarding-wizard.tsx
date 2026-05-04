@@ -64,11 +64,15 @@ type OnboardingData = {
 };
 
 export function OnboardingWizard({ 
-  userId, 
-  initialData 
+  userId,
+  userEmail,
+  initialData,
+  profileExists,
 }: { 
-  userId: string; 
+  userId: string;
+  userEmail: string;
   initialData: Record<string, unknown>;
+  profileExists: boolean;
 }) {
   const router = useRouter();
   const supabase = createClient();
@@ -131,25 +135,44 @@ export function OnboardingWizard({
 
   const completeOnboarding = async () => {
     setSaving(true);
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        full_name: data.full_name,
-        phone: data.phone || null,
-        job_title: data.job_title || null,
-        company_name: data.company_name || null,
-        bio: data.bio || null,
-        timezone: data.timezone,
-        preferred_language: data.preferred_language,
-        notification_preferences: data.notification_preferences,
-        onboarding_completed: true,
-      } as Record<string, unknown>)
-      .eq("id", userId);
+    
+    const profileData = {
+      id: userId,
+      email: userEmail,
+      full_name: data.full_name,
+      role: (initialData.role as string) || "work_team",
+      avatar_url: (initialData.avatar_url as string) || null,
+      phone: data.phone || null,
+      job_title: data.job_title || null,
+      company_name: data.company_name || null,
+      bio: data.bio || null,
+      timezone: data.timezone,
+      preferred_language: data.preferred_language,
+      notification_preferences: data.notification_preferences,
+      onboarding_completed: true,
+    };
+
+    let error;
+    
+    if (profileExists) {
+      // Update existing profile
+      const result = await supabase
+        .from("profiles")
+        .update(profileData as Record<string, unknown>)
+        .eq("id", userId);
+      error = result.error;
+    } else {
+      // Create new profile (trigger might have failed)
+      const result = await supabase
+        .from("profiles")
+        .upsert(profileData as Record<string, unknown>, { onConflict: "id" });
+      error = result.error;
+    }
 
     setSaving(false);
 
     if (error) {
-      toast.error("حدث خطأ في حفظ البيانات");
+      toast.error("حدث خطأ في حفظ البيانات: " + error.message);
       console.error(error);
       return;
     }

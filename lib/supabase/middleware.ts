@@ -27,8 +27,9 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
   const isOnboarding = pathname.startsWith("/onboarding");
-  const isAuthPage = pathname.startsWith("/login") || pathname.startsWith("/register") || pathname.startsWith("/auth") || isOnboarding;
-  const isPublic = isAuthPage || pathname === "/" || pathname.startsWith("/_next") || pathname.startsWith("/api");
+  const isAuthCallback = pathname.startsWith("/auth/callback") || pathname.startsWith("/auth/signout");
+  const isLoginOrRegister = pathname.startsWith("/login") || pathname.startsWith("/register");
+  const isPublic = isLoginOrRegister || isAuthCallback || isOnboarding || pathname === "/" || pathname.startsWith("/_next") || pathname.startsWith("/api");
 
   // Not logged in and trying to access protected route
   if (!user && !isPublic) {
@@ -40,25 +41,41 @@ export async function updateSession(request: NextRequest) {
 
   // Logged in user
   if (user) {
+    // Skip profile check for auth callbacks - let them complete first
+    if (isAuthCallback) {
+      return response;
+    }
+
     // Check if onboarding is completed
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("onboarding_completed")
       .eq("id", user.id)
       .single();
 
-    const onboardingCompleted = (profile as { onboarding_completed: boolean } | null)?.onboarding_completed ?? false;
+    // If profile doesn't exist yet (trigger might be slow), redirect to onboarding
+    // The onboarding page will handle creating/updating the profile
+    const profileExists = !profileError && profile;
+    const onboardingCompleted = profileExists && (profile as { onboarding_completed: boolean }).onboarding_completed === true;
 
     // User hasn't completed onboarding and is not on onboarding page
-    if (!onboardingCompleted && !isOnboarding && !pathname.startsWith("/auth")) {
+    if (!onboardingCompleted && !isOnboarding) {
+      // Allow login/register pages to redirect naturally after auth
+      if (isLoginOrRegister) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/onboarding";
+        url.search = "";
+        return NextResponse.redirect(url);
+      }
+      // For other protected pages, redirect to onboarding
       const url = request.nextUrl.clone();
       url.pathname = "/onboarding";
       url.search = "";
       return NextResponse.redirect(url);
     }
 
-    // User completed onboarding but is on auth pages (login/register)
-    if (onboardingCompleted && (pathname.startsWith("/login") || pathname.startsWith("/register"))) {
+    // User completed onboarding but is on login/register pages
+    if (onboardingCompleted && isLoginOrRegister) {
       const url = request.nextUrl.clone();
       url.pathname = "/dashboard";
       url.search = "";
