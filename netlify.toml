@@ -1,0 +1,36 @@
+# Netlify configuration for TaskFlow (Next.js 14 + Supabase)
+# Docs: https://docs.netlify.com/frameworks/next-js/overview/
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  # Next.js 14 needs Node 18.17+. Use 20 LTS for best perf.
+  NODE_VERSION = "20"
+  NPM_FLAGS = "--legacy-peer-deps"
+  # Suppress Netlify's automatic deploy summary spam in build logs
+  NETLIFY_NEXT_PLUGIN_SKIP = "false"
+
+# Cache headers for static assets (images, fonts, JS chunks)
+[[headers]]
+  for = "/_next/static/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400, must-revalidate"
+
+# Security headers
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+# Note: @netlify/plugin-nextjs is auto-installed by Netlify when it detects
+# a Next.js project. No need to add it explicitly to package.json or here.

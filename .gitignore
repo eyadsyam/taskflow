@@ -8,6 +8,7 @@ dist
 .DS_Store
 coverage
 .vercel
+.netlify
 next-env.d.ts
 .turbo
 supabase/.branches
