@@ -28,7 +28,8 @@
       "Exec(mv)",
       "Exec(sed)",
       "Exec(cp)",
-      "Exec(ls)"
+      "Exec(ls)",
+      "Exec(npx next)"
     ]
   }
 }

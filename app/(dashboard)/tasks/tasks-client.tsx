@@ -92,40 +92,42 @@ export function TasksClient({ initialTasks, profiles }: { initialTasks: Task[]; 
   }
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 space-y-6">
+    <div className="p-4 md:p-6 lg:p-8 space-y-6 max-w-[1400px] mx-auto">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="text-3xl font-bold">التاسكات</h1>
-          <p className="text-muted-foreground mt-1">{filtered.length} تاسك</p>
+          <h1 className="text-2xl font-bold">التاسكات</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{filtered.length} تاسك</p>
         </div>
-        <Button asChild variant="gradient">
+        <Button asChild variant="gradient" size="sm">
           <Link href="/tasks/new"><Plus className="h-4 w-4" /> تاسك جديد</Link>
         </Button>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-[1fr_auto_auto_auto]">
-        <div className="relative">
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
           <Search className="absolute top-1/2 -translate-y-1/2 start-3 h-4 w-4 text-muted-foreground pointer-events-none" />
           <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="دور بالعنوان، العميل، أو التفاصيل..." className="ps-9" />
         </div>
-        <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="md:w-56"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">كل الحالات</SelectItem>
-            {STATUS_ORDER.map((s) => (
-              <SelectItem key={s} value={s}>{STATUS_LABELS[s]}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={assignee} onValueChange={setAssignee}>
-          <SelectTrigger className="md:w-56"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">كل التيم</SelectItem>
-            {profiles.map((p) => (
-              <SelectItem key={p.id} value={p.id}>{p.full_name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2">
+          <Select value={status} onValueChange={setStatus}>
+            <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">كل الحالات</SelectItem>
+              {STATUS_ORDER.map((s) => (
+                <SelectItem key={s} value={s}>{STATUS_LABELS[s]}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={assignee} onValueChange={setAssignee}>
+            <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">كل التيم</SelectItem>
+              {profiles.map((p) => (
+                <SelectItem key={p.id} value={p.id}>{p.full_name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <Tabs value={view} onValueChange={(v) => setView(v as "table" | "kanban")}>

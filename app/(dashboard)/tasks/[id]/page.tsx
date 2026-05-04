@@ -31,7 +31,7 @@ export default async function TaskDetailPage({ params }: { params: { id: string 
   const locked = t.status === "paid_closed";
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 max-w-5xl mx-auto space-y-4">
+    <div className="p-4 md:p-6 lg:p-8 max-w-4xl mx-auto space-y-4">
       {locked && (
         <div className="rounded-xl border border-green-500/40 bg-green-500/10 p-4 flex items-center gap-3">
           <Lock className="h-5 w-5 text-green-600" />

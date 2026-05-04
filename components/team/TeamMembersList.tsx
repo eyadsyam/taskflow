@@ -1,8 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Mail, Phone, MessageCircle, Briefcase } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { MessageCircle, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { createClient } from "@/lib/supabase/client";
@@ -44,44 +43,39 @@ export function TeamMembersList({ members, taskCounts, currentUserId }: Props) {
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {liveMembers.map((p) => {
         const status = getUserStatus(p.last_seen_at);
         const isMe = p.id === currentUserId;
-        
+
         return (
-          <Card key={p.id} className="overflow-hidden hover:shadow-md transition-all hover:-translate-y-0.5">
-            <div className="h-20 bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20" />
-            <CardContent className="pt-0 -mt-10">
-              <div className="flex flex-col items-center text-center">
-                <UserAvatar 
-                  name={p.full_name} 
-                  src={p.avatar_url} 
-                  size="xl" 
-                  status={status}
-                  className="ring-4 ring-background"
-                />
-                <h3 className="font-semibold mt-3 text-base">
+          <div
+            key={p.id}
+            className="rounded-xl border bg-card p-4 hover:border-primary/30 transition-all"
+          >
+            <div className="flex items-start gap-3">
+              <UserAvatar
+                name={p.full_name}
+                src={p.avatar_url}
+                size="lg"
+                status={status}
+              />
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-sm truncate">
                   {p.full_name}
                   {isMe && <span className="text-xs text-muted-foreground mr-1">(انت)</span>}
                 </h3>
                 {p.job_title && (
-                  <p className="text-sm text-muted-foreground mt-0.5 flex items-center gap-1">
-                    <Briefcase className="h-3 w-3" />
+                  <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1 truncate">
+                    <Briefcase className="h-3 w-3 shrink-0" />
                     {p.job_title}
                   </p>
                 )}
-                {p.status_message && (
-                  <p className="text-xs text-muted-foreground mt-2 line-clamp-2 italic">
-                    &ldquo;{p.status_message}&rdquo;
-                  </p>
-                )}
-                
-                <div className="mt-3 flex items-center gap-2 flex-wrap justify-center">
+                <div className="flex items-center gap-2 mt-2">
                   <span className={`text-xs px-2 py-0.5 rounded-full ${
-                    p.role === "admin" 
-                      ? "bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300" 
-                      : "bg-secondary"
+                    p.role === "admin"
+                      ? "bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300"
+                      : "bg-muted text-muted-foreground"
                   }`}>
                     {ROLE_LABELS[p.role]}
                   </span>
@@ -89,21 +83,27 @@ export function TeamMembersList({ members, taskCounts, currentUserId }: Props) {
                     {taskCounts[p.id] ?? 0} تاسك
                   </span>
                 </div>
-
-                {!isMe && (
-                  <Button 
-                    onClick={() => startDM(p.id)}
-                    variant="soft"
-                    size="sm"
-                    className="mt-4 w-full"
-                  >
-                    <MessageCircle className="h-4 w-4" />
-                    كلمه
-                  </Button>
-                )}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+
+            {p.status_message && (
+              <p className="text-xs text-muted-foreground mt-3 pt-3 border-t border-border/50 line-clamp-1 italic">
+                {p.status_message}
+              </p>
+            )}
+
+            {!isMe && (
+              <Button
+                onClick={() => startDM(p.id)}
+                variant="outline"
+                size="sm"
+                className="w-full mt-3 text-xs"
+              >
+                <MessageCircle className="h-3.5 w-3.5" />
+                كلمه
+              </Button>
+            )}
+          </div>
         );
       })}
     </div>

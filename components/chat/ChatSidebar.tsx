@@ -63,7 +63,7 @@ export function ChatSidebar({ channels, dms, teamMembers, currentUserId }: Props
   }
 
   return (
-    <aside className="w-72 flex-shrink-0 border-s border-border bg-sidebar flex flex-col">
+    <aside className="w-64 flex-shrink-0 border-s border-border bg-card/50 flex flex-col">
       {/* Header */}
       <div className="p-4 border-b border-sidebar-border">
         <div className="flex items-center justify-between mb-3">

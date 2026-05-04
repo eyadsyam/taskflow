@@ -5,13 +5,12 @@ import {
   Pie,
   Cell,
   Tooltip,
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
 } from "recharts";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { STATUS_LABELS } from "@/lib/utils";
 import type { TaskStatus } from "@/lib/database.types";
 
@@ -32,44 +31,98 @@ export function DashboardCharts({
   const data = statusCounts.map((s) => ({ ...s, label: STATUS_LABELS[s.name as TaskStatus] }));
 
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      <Card>
-        <CardHeader><CardTitle className="text-base">توزيع الحالات</CardTitle></CardHeader>
-        <CardContent className="h-72">
+    <div className="grid gap-4 md:grid-cols-5">
+      {/* Pie chart - narrower */}
+      <div className="md:col-span-2 rounded-xl border bg-card p-5">
+        <h3 className="text-sm font-semibold mb-4">توزيع الحالات</h3>
+        <div className="h-52">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-              <Pie data={data} dataKey="value" nameKey="label" innerRadius={60} outerRadius={90} paddingAngle={2}>
+              <Pie
+                data={data}
+                dataKey="value"
+                nameKey="label"
+                innerRadius={50}
+                outerRadius={75}
+                paddingAngle={3}
+                strokeWidth={0}
+              >
                 {data.map((d) => (
                   <Cell key={d.name} fill={COLORS[d.name as TaskStatus]} />
                 ))}
               </Pie>
-              <Tooltip />
+              <Tooltip
+                contentStyle={{
+                  borderRadius: "8px",
+                  border: "1px solid hsl(var(--border))",
+                  background: "hsl(var(--card))",
+                  fontSize: "13px",
+                }}
+              />
             </PieChart>
           </ResponsiveContainer>
-          <div className="mt-2 flex flex-wrap justify-center gap-3 text-xs">
-            {data.map((d) => (
-              <span key={d.name} className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-sm" style={{ background: COLORS[d.name as TaskStatus] }} />
-                {d.label} ({d.value})
-              </span>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader><CardTitle className="text-base">المهام خلال آخر 30 يوم</CardTitle></CardHeader>
-        <CardContent className="h-72">
+        </div>
+        <div className="grid grid-cols-2 gap-2 mt-3">
+          {data.map((d) => (
+            <div key={d.name} className="flex items-center gap-2 text-xs">
+              <span
+                className="h-2.5 w-2.5 rounded-sm shrink-0"
+                style={{ background: COLORS[d.name as TaskStatus] }}
+              />
+              <span className="text-muted-foreground truncate">{d.label}</span>
+              <span className="font-medium mr-auto">{d.value}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Area chart - wider */}
+      <div className="md:col-span-3 rounded-xl border bg-card p-5">
+        <h3 className="text-sm font-semibold mb-4">المهام خلال آخر 30 يوم</h3>
+        <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={timeline}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-              <XAxis dataKey="date" stroke="currentColor" fontSize={11} />
-              <YAxis stroke="currentColor" fontSize={11} allowDecimals={false} />
-              <Tooltip />
-              <Line type="monotone" dataKey="value" stroke="#0f172a" strokeWidth={2} dot={false} />
-            </LineChart>
+            <AreaChart data={timeline}>
+              <defs>
+                <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="hsl(262, 83%, 58%)" stopOpacity={0.3} />
+                  <stop offset="100%" stopColor="hsl(262, 83%, 58%)" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} />
+              <XAxis
+                dataKey="date"
+                fontSize={11}
+                tickLine={false}
+                axisLine={false}
+                className="fill-muted-foreground"
+              />
+              <YAxis
+                fontSize={11}
+                tickLine={false}
+                axisLine={false}
+                allowDecimals={false}
+                className="fill-muted-foreground"
+                width={30}
+              />
+              <Tooltip
+                contentStyle={{
+                  borderRadius: "8px",
+                  border: "1px solid hsl(var(--border))",
+                  background: "hsl(var(--card))",
+                  fontSize: "13px",
+                }}
+              />
+              <Area
+                type="monotone"
+                dataKey="value"
+                stroke="hsl(262, 83%, 58%)"
+                strokeWidth={2}
+                fill="url(#areaGradient)"
+              />
+            </AreaChart>
           </ResponsiveContainer>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

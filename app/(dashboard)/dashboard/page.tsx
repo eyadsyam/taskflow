@@ -2,13 +2,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import type { Task, Profile } from "@/lib/database.types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TaskStatusBadge } from "@/components/tasks/TaskStatusBadge";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { DashboardCharts } from "./charts";
 import { formatCurrency, relativeTime, getUserStatus } from "@/lib/utils";
-import { ListChecks, Wallet, CheckCircle2, Users, MessageCircle, Plus, ArrowLeft, Activity, TrendingUp } from "lucide-react";
+import { ListChecks, Wallet, CheckCircle2, MessageCircle, Plus, ArrowLeft, Activity, TrendingUp, Clock } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -52,180 +51,172 @@ export default async function DashboardPage() {
   }
   const timeline = Array.from(byDay.entries()).map(([date, value]) => ({ date: date.slice(5), value }));
 
-  const recent = all.slice(0, 5);
+  const recent = all.slice(0, 6);
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 space-y-6 fade-in">
-      {/* Welcome banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 p-6 md:p-8 text-white">
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-1/2 right-1/4 w-72 h-72 bg-white/20 rounded-full blur-3xl" />
+    <div className="p-4 md:p-6 lg:p-8 space-y-8 fade-in max-w-[1400px] mx-auto">
+      {/* Top bar: greeting + actions */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold">نورت يا تيم</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            {onlineMembers.length} أونلاين دلوقتي من {profiles.length}
+          </p>
         </div>
-        <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold">نورت يا تيم</h1>
-            <p className="text-white/80 mt-2 text-lg">{onlineMembers.length} أونلاين دلوقتي من {profiles.length}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button asChild variant="secondary" size="lg">
-              <Link href="/chat"><MessageCircle className="h-5 w-5" /> الشات</Link>
-            </Button>
-            <Button asChild size="lg" className="bg-white text-violet-700 hover:bg-white/90">
-              <Link href="/tasks/new"><Plus className="h-5 w-5" /> تاسك جديد</Link>
-            </Button>
-          </div>
+        <div className="flex items-center gap-2">
+          <Button asChild variant="outline" size="sm">
+            <Link href="/chat"><MessageCircle className="h-4 w-4" /> الشات</Link>
+          </Button>
+          <Button asChild variant="gradient" size="sm">
+            <Link href="/tasks/new"><Plus className="h-4 w-4" /> تاسك جديد</Link>
+          </Button>
         </div>
       </div>
 
-      {/* KPIs */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Kpi 
-          icon={ListChecks} 
-          label="تاسكات شغالة" 
-          value={active} 
-          color="text-blue-600 dark:text-blue-400"
-          bg="bg-blue-100 dark:bg-blue-900/30"
+      {/* KPI strip */}
+      <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+        <KpiCard
+          icon={ListChecks}
+          label="تاسكات شغالة"
+          value={active}
+          accentColor="border-blue-500"
+          iconBg="bg-blue-500/10 text-blue-600 dark:text-blue-400"
         />
-        <Kpi 
-          icon={Wallet} 
-          label="مستنيين الفلوس" 
-          value={pendingPayment} 
-          color="text-amber-600 dark:text-amber-400"
-          bg="bg-amber-100 dark:bg-amber-900/30"
+        <KpiCard
+          icon={Wallet}
+          label="مستنيين الفلوس"
+          value={pendingPayment}
+          accentColor="border-amber-500"
+          iconBg="bg-amber-500/10 text-amber-600 dark:text-amber-400"
         />
-        <Kpi 
-          icon={CheckCircle2} 
-          label="خلصوا الشهر ده" 
-          value={doneThisMonth} 
-          color="text-green-600 dark:text-green-400"
-          bg="bg-green-100 dark:bg-green-900/30"
+        <KpiCard
+          icon={CheckCircle2}
+          label="خلصوا الشهر ده"
+          value={doneThisMonth}
+          accentColor="border-emerald-500"
+          iconBg="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
         />
-        <Kpi 
-          icon={Activity} 
-          label="أونلاين" 
-          value={onlineMembers.length} 
-          subtitle={`من ${profiles.length}`}
-          color="text-violet-600 dark:text-violet-400"
-          bg="bg-violet-100 dark:bg-violet-900/30"
+        <KpiCard
+          icon={Activity}
+          label="أونلاين"
+          value={onlineMembers.length}
+          suffix={`/${profiles.length}`}
+          accentColor="border-violet-500"
+          iconBg="bg-violet-500/10 text-violet-600 dark:text-violet-400"
         />
       </div>
 
-      {/* Charts + Online team */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <DashboardCharts statusCounts={statusCounts} timeline={timeline} />
+      {/* Online team strip */}
+      {profiles.length > 0 && (
+        <div className="flex items-center gap-3 overflow-x-auto pb-1 scrollbar-none">
+          <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">التيم:</span>
+          <div className="flex items-center -space-x-2 rtl:space-x-reverse">
+            {profiles.slice(0, 10).map((p) => (
+              <UserAvatar
+                key={p.id}
+                name={p.full_name}
+                src={p.avatar_url}
+                size="sm"
+                status={getUserStatus(p.last_seen_at)}
+                className="ring-2 ring-background"
+              />
+            ))}
+          </div>
+          {profiles.length > 10 && (
+            <span className="text-xs text-muted-foreground">+{profiles.length - 10}</span>
+          )}
+          <Link href="/team" className="text-xs text-primary hover:underline whitespace-nowrap mr-auto">
+            شوف الكل <ArrowLeft className="inline h-3 w-3" />
+          </Link>
         </div>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              التيم
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {profiles.slice(0, 8).map((p) => {
-              const status = getUserStatus(p.last_seen_at);
-              return (
-                <div key={p.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent transition-colors">
-                  <UserAvatar 
-                    name={p.full_name} 
-                    src={p.avatar_url} 
-                    size="sm" 
-                    status={status}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium truncate">{p.full_name}</div>
-                    <div className="text-xs text-muted-foreground truncate">
-                      {p.status_message || p.job_title || (status === "online" ? "أونلاين" : "مش هنا")}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-            <Button asChild variant="ghost" size="sm" className="w-full justify-center mt-2">
-              <Link href="/team">شوف الكل <ArrowLeft className="h-4 w-4" /></Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      )}
+
+      {/* Charts - full width, side by side */}
+      <DashboardCharts statusCounts={statusCounts} timeline={timeline} />
 
       {/* Recent tasks */}
-      <Card>
-        <CardHeader className="flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
+      <section>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-muted-foreground" />
             آخر التاسكات
-          </CardTitle>
+          </h2>
           <Button asChild variant="ghost" size="sm">
             <Link href="/tasks">شوف الكل <ArrowLeft className="h-4 w-4" /></Link>
           </Button>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {recent.length === 0 ? (
-            <div className="py-12 text-center">
-              <div className="mx-auto mb-4 opacity-70 text-muted-foreground">
-                <Image src="/assets/empty-tasks.svg" alt="" width={200} height={160} className="mx-auto" />
-              </div>
-              <p className="font-medium">مفيش تاسكات لسه</p>
-              <p className="text-sm text-muted-foreground mt-1 mb-4">ابدأ بأول تاسك ليك</p>
-              <Button asChild variant="gradient">
-                <Link href="/tasks/new"><Plus className="h-4 w-4" /> تاسك جديد</Link>
-              </Button>
-            </div>
-          ) : (
-            recent.map((t) => (
+        </div>
+
+        {recent.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-border bg-muted/30 py-16 text-center">
+            <Image src="/assets/empty-tasks.svg" alt="" width={160} height={120} className="mx-auto mb-4 opacity-60" />
+            <p className="font-medium">مفيش تاسكات لسه</p>
+            <p className="text-sm text-muted-foreground mt-1 mb-4">ابدأ بأول تاسك ليك</p>
+            <Button asChild variant="gradient" size="sm">
+              <Link href="/tasks/new"><Plus className="h-4 w-4" /> تاسك جديد</Link>
+            </Button>
+          </div>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {recent.map((t) => (
               <Link
                 key={t.id}
                 href={`/tasks/${t.id}`}
-                className="flex items-center justify-between gap-3 rounded-xl border border-border p-4 hover:bg-accent hover:border-primary/30 transition-all group"
+                className="group rounded-xl border border-border bg-card p-4 hover:border-primary/40 hover:shadow-md transition-all"
               >
-                <div className="min-w-0 flex-1">
-                  <div className="font-medium truncate group-hover:text-primary transition-colors">{t.title}</div>
-                  <div className="text-xs text-muted-foreground truncate mt-0.5">{t.client_name} • {relativeTime(t.updated_at)}</div>
-                </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  <span className="text-sm font-medium hidden sm:inline">{formatCurrency(t.price, t.currency ?? "EGP")}</span>
+                <div className="flex items-start justify-between gap-2 mb-3">
                   <TaskStatusBadge status={t.status} />
+                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {relativeTime(t.updated_at)}
+                  </span>
+                </div>
+                <h3 className="font-medium text-sm truncate group-hover:text-primary transition-colors">
+                  {t.title}
+                </h3>
+                <p className="text-xs text-muted-foreground mt-1 truncate">{t.client_name}</p>
+                <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between">
+                  <span className="text-sm font-semibold tabular-nums">
+                    {formatCurrency(t.price, t.currency ?? "EGP")}
+                  </span>
                 </div>
               </Link>
-            ))
-          )}
-        </CardContent>
-      </Card>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }
 
-function Kpi({ 
-  icon: Icon, 
-  label, 
-  value, 
-  subtitle,
-  color,
-  bg,
-}: { 
-  icon: React.ComponentType<{ className?: string }>; 
-  label: string; 
+function KpiCard({
+  icon: Icon,
+  label,
+  value,
+  suffix,
+  accentColor,
+  iconBg,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
   value: number | string;
-  subtitle?: string;
-  color: string;
-  bg: string;
+  suffix?: string;
+  accentColor: string;
+  iconBg: string;
 }) {
   return (
-    <Card className="overflow-hidden hover:shadow-md transition-shadow">
-      <CardContent className="pt-6">
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <div className="text-sm font-medium text-muted-foreground">{label}</div>
-            <div className="text-3xl font-bold mt-1 tabular-nums">{value}</div>
-            {subtitle && <div className="text-xs text-muted-foreground mt-1">{subtitle}</div>}
-          </div>
-          <div className={`h-12 w-12 rounded-xl grid place-items-center ${bg}`}>
-            <Icon className={`h-6 w-6 ${color}`} />
+    <div className={`rounded-xl border bg-card p-4 border-s-4 ${accentColor}`}>
+      <div className="flex items-center gap-3">
+        <div className={`h-10 w-10 rounded-lg grid place-items-center shrink-0 ${iconBg}`}>
+          <Icon className="h-5 w-5" />
+        </div>
+        <div className="min-w-0">
+          <div className="text-xs text-muted-foreground truncate">{label}</div>
+          <div className="text-2xl font-bold tabular-nums leading-tight">
+            {value}
+            {suffix && <span className="text-sm font-normal text-muted-foreground">{suffix}</span>}
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
