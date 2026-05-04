@@ -145,7 +145,7 @@ export function ChatInput({ conversationId, currentUserId, replyTo, onCancelRepl
   }
 
   return (
-    <div className="border-t border-border p-3 md:p-4 bg-background">
+    <div className="border-t border-border p-3 md:p-4 bg-background shrink-0">
       <div className="max-w-4xl mx-auto">
         {/* Reply preview */}
         {replyTo && (
@@ -196,8 +196,8 @@ export function ChatInput({ conversationId, currentUserId, replyTo, onCancelRepl
 
         {/* Input area */}
         <div className={cn(
-          "flex items-end gap-2 rounded-2xl border border-input bg-background px-3 py-2 transition-colors",
-          "focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/30"
+          "flex items-end gap-1 rounded-lg border border-input bg-elevated/50 px-2 py-1.5 transition-colors",
+          "focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20"
         )}>
           <Button 
             type="button"
@@ -259,9 +259,9 @@ export function ChatInput({ conversationId, currentUserId, replyTo, onCancelRepl
             </PopoverContent>
           </Popover>
           
-          <Button 
+          <Button
             type="button"
-            variant="gradient"
+            variant="default"
             size="icon-sm"
             onClick={handleSend}
             disabled={sending || (!message.trim() && files.length === 0)}

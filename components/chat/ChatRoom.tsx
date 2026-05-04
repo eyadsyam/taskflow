@@ -133,52 +133,56 @@ export function ChatRoom({ conversation, members, allMembers, initialMessages, c
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-3 border-b border-border bg-background/50 backdrop-blur-sm">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between px-4 md:px-6 h-[52px] border-b border-border bg-background/70 backdrop-blur-md shrink-0">
+        <div className="flex items-center gap-2.5 min-w-0">
           {conversation.type === "dm" && dmPartner ? (
             <>
-              <UserAvatar 
-                name={dmPartner.full_name} 
-                src={dmPartner.avatar_url} 
-                size="md" 
+              <UserAvatar
+                name={dmPartner.full_name}
+                src={dmPartner.avatar_url}
+                size="sm"
                 status={getUserStatus(dmPartner.last_seen_at)}
               />
-              <div>
-                <h2 className="font-semibold">{dmPartner.full_name}</h2>
-                <div className="text-xs text-muted-foreground">
-                  {getUserStatus(dmPartner.last_seen_at) === "online" 
-                    ? <span className="text-green-600 dark:text-green-400">أونلاين</span>
-                    : dmPartner.status_message || dmPartner.job_title || "مش هنا"
-                  }
+              <div className="min-w-0">
+                <h2 className="font-semibold text-sm truncate">{dmPartner.full_name}</h2>
+                <div className="text-[11px] text-muted-foreground flex items-center gap-1.5">
+                  {getUserStatus(dmPartner.last_seen_at) === "online" ? (
+                    <>
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                      <span>أونلاين</span>
+                    </>
+                  ) : (
+                    <span className="truncate">{dmPartner.status_message || dmPartner.job_title || "مش هنا"}</span>
+                  )}
                 </div>
               </div>
             </>
           ) : (
             <>
-              <div className="h-10 w-10 rounded-xl bg-primary/10 grid place-items-center text-primary">
-                <Hash className="h-5 w-5" />
+              <div className="h-8 w-8 rounded-md border border-border bg-elevated grid place-items-center text-muted-foreground shrink-0">
+                <Hash className="h-4 w-4" />
               </div>
-              <div>
-                <h2 className="font-semibold flex items-center gap-2">
+              <div className="min-w-0">
+                <h2 className="font-semibold text-sm flex items-center gap-1.5 truncate">
                   {conversation.name}
-                  {conversation.is_private && <Lock className="h-3 w-3 text-muted-foreground" />}
+                  {conversation.is_private && <Lock className="h-2.5 w-2.5 text-muted-foreground" />}
                 </h2>
-                <div className="text-xs text-muted-foreground">
+                <div className="text-[11px] text-muted-foreground truncate">
                   {conversation.description || `${allMembers.length} عضو`}
                 </div>
               </div>
             </>
           )}
         </div>
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" title="دور في المحادثة">
-            <Search className="h-4 w-4" />
+        <div className="flex items-center gap-0.5">
+          <Button variant="ghost" size="icon-sm" title="دور في المحادثة" className="h-7 w-7">
+            <Search className="h-3.5 w-3.5" />
           </Button>
-          <Button variant="ghost" size="icon" title="تفاصيل">
-            <Info className="h-4 w-4" />
+          <Button variant="ghost" size="icon-sm" title="تفاصيل" className="h-7 w-7">
+            <Info className="h-3.5 w-3.5" />
           </Button>
-          <Button variant="ghost" size="icon" title="المزيد">
-            <MoreVertical className="h-4 w-4" />
+          <Button variant="ghost" size="icon-sm" title="المزيد" className="h-7 w-7">
+            <MoreVertical className="h-3.5 w-3.5" />
           </Button>
         </div>
       </div>

@@ -52,11 +52,11 @@ export function TaskChatLink({ taskId, taskTitle, existingConversationId }: Prop
   }
   
   return (
-    <Card className="bg-gradient-to-br from-violet-500/5 to-fuchsia-500/5 border-violet-500/20">
+    <Card className="bg-primary/5 border-primary/20">
       <CardContent className="p-4 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-violet-600 to-fuchsia-600 grid place-items-center shrink-0">
-            <MessageCircle className="h-6 w-6 text-white" />
+          <div className="h-10 w-10 rounded-md border border-primary/30 bg-primary/10 grid place-items-center shrink-0">
+            <MessageCircle className="h-5 w-5 text-primary" />
           </div>
           <div>
             <h3 className="font-semibold">

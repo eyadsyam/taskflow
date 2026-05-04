@@ -162,8 +162,12 @@ export function OnboardingWizard({
   const avatarUrl = (initialData.avatar_url as string) || null;
 
   return (
-    <div className="min-h-screen gradient-mesh py-8 px-4 flex items-center">
-      <div className="mx-auto max-w-2xl w-full">
+    <div className="min-h-screen relative py-8 px-4 flex items-center">
+      {/* Background */}
+      <div className="absolute inset-0 bg-grid opacity-[0.4]" />
+      <div className="absolute top-1/4 right-1/4 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] pointer-events-none" />
+
+      <div className="relative mx-auto max-w-2xl w-full">
         {/* Progress Steps */}
         <div className="mb-8">
           <div className="flex items-center justify-center">
@@ -171,16 +175,16 @@ export function OnboardingWizard({
               <div key={step.id} className="flex items-center">
                 <div
                   className={cn(
-                    "flex h-12 w-12 items-center justify-center rounded-full transition-all duration-500",
+                    "flex h-10 w-10 items-center justify-center rounded-full transition-all duration-300 border",
                     currentStep > step.id
-                      ? "bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white shadow-lg shadow-violet-500/30"
+                      ? "bg-primary text-primary-foreground border-primary"
                       : currentStep === step.id
-                      ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30 ring-4 ring-primary/20"
-                      : "bg-muted text-muted-foreground"
+                      ? "bg-primary text-primary-foreground border-primary shadow-[0_0_24px_-6px_hsl(var(--primary)/0.6)] ring-2 ring-primary/30"
+                      : "bg-elevated text-muted-foreground border-border"
                   )}
                 >
                   {currentStep > step.id ? (
-                    <CheckCircle2 className="h-6 w-6" />
+                    <CheckCircle2 className="h-5 w-5" />
                   ) : (
                     step.icon
                   )}
@@ -188,8 +192,8 @@ export function OnboardingWizard({
                 {index < STEPS.length - 1 && (
                   <div
                     className={cn(
-                      "mx-2 h-1 w-16 rounded-full transition-all duration-500 sm:w-24 md:w-32",
-                      currentStep > step.id ? "bg-gradient-to-r from-violet-600 to-fuchsia-600" : "bg-muted"
+                      "mx-2 h-px w-12 sm:w-20 md:w-28 transition-all duration-300",
+                      currentStep > step.id ? "bg-primary" : "bg-border"
                     )}
                   />
                 )}
@@ -197,13 +201,14 @@ export function OnboardingWizard({
             ))}
           </div>
           <div className="mt-6 text-center">
-            <h2 className="text-3xl font-bold gradient-text mb-2">{STEPS[currentStep - 1].title}</h2>
-            <p className="text-muted-foreground">{STEPS[currentStep - 1].description}</p>
+            <div className="section-label mb-2">خطوة {currentStep} من {STEPS.length}</div>
+            <h2 className="text-3xl font-bold tracking-tight mb-1">{STEPS[currentStep - 1].title}</h2>
+            <p className="text-sm text-muted-foreground">{STEPS[currentStep - 1].description}</p>
           </div>
         </div>
 
         {/* Step Content */}
-        <Card className="shadow-2xl border-border/50 backdrop-blur-sm bg-card/95">
+        <Card className="bg-card/60 backdrop-blur-sm shadow-soft">
           <CardContent className="p-6 md:p-8">
             {currentStep === 1 && (
               <div className="space-y-6 animate-slide-up">

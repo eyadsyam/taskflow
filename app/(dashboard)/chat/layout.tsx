@@ -39,7 +39,7 @@ export default async function ChatLayout({ children }: { children: React.ReactNo
     .filter((c) => c && c.type === "dm");
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)]">
+    <div className="flex h-[calc(100vh-52px)]">
       <ChatSidebar 
         channels={channels} 
         dms={dms} 

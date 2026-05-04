@@ -14,10 +14,10 @@ export const STATUS_LABELS: Record<TaskStatus, string> = {
 };
 
 export const STATUS_COLORS: Record<TaskStatus, string> = {
-  pending_client: "bg-amber-500/15 text-amber-700 border-amber-500/30 dark:text-amber-400",
-  in_progress: "bg-blue-500/15 text-blue-700 border-blue-500/30 dark:text-blue-400",
-  done_pending_payment: "bg-orange-500/15 text-orange-700 border-orange-500/30 dark:text-orange-400",
-  paid_closed: "bg-green-500/15 text-green-700 border-green-500/30 dark:text-green-400",
+  pending_client: "bg-amber-500/10 text-amber-400 border-amber-500/25",
+  in_progress: "bg-blue-500/10 text-blue-400 border-blue-500/25",
+  done_pending_payment: "bg-orange-500/10 text-orange-400 border-orange-500/25",
+  paid_closed: "bg-emerald-500/10 text-emerald-400 border-emerald-500/25",
 };
 
 export const STATUS_ORDER: TaskStatus[] = [

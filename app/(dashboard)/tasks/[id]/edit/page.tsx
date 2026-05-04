@@ -1,7 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { TaskForm } from "@/components/tasks/TaskForm";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Profile, Task } from "@/lib/database.types";
 
 export const dynamic = "force-dynamic";
@@ -18,11 +17,19 @@ export default async function EditTaskPage({ params }: { params: { id: string } 
 
   const teamMembers = ((rawProfiles ?? []) as Profile[]);
   return (
-    <div className="max-w-3xl mx-auto p-6">
-      <Card>
-        <CardHeader><CardTitle>عدل التاسك</CardTitle></CardHeader>
-        <CardContent><TaskForm task={task as Task} workTeam={teamMembers} /></CardContent>
-      </Card>
+    <div className="fade-in">
+      <section className="border-b border-border px-4 md:px-8 lg:px-10 py-6">
+        <div className="max-w-3xl mx-auto">
+          <div className="section-label mb-1">Edit</div>
+          <h1 className="text-3xl font-bold tracking-tight">عدل التاسك</h1>
+          <p className="text-sm text-muted-foreground mt-1 truncate">{task.title}</p>
+        </div>
+      </section>
+      <section className="px-4 md:px-8 lg:px-10 py-6">
+        <div className="max-w-3xl mx-auto rounded-lg border border-border bg-card p-6">
+          <TaskForm task={task} workTeam={teamMembers} />
+        </div>
+      </section>
     </div>
   );
 }

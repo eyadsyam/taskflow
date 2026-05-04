@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Plus, LayoutGrid, Table as TableIcon, Search } from "lucide-react";
+import { Plus, LayoutGrid, Table as TableIcon, Search, Filter } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { Profile, Task, TaskStatus } from "@/lib/database.types";
 import { Button } from "@/components/ui/button";
@@ -71,7 +71,6 @@ export function TasksClient({ initialTasks, profiles }: { initialTasks: Task[]; 
   }, [tasks, search, status, assignee]);
 
   async function changeStatus(id: string, next: TaskStatus, prev: TaskStatus) {
-    // Optimistic
     setTasks((ts) => ts.map((t) => (t.id === id ? { ...t, status: next } : t)));
     const { error } = await supabase.from("tasks").update({ status: next } as Record<string, unknown>).eq("id", id);
     if (error) {
@@ -80,7 +79,6 @@ export function TasksClient({ initialTasks, profiles }: { initialTasks: Task[]; 
       toast.error(error.message);
       return;
     }
-    // fire edge function (non-blocking)
     fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/on-task-status-change`, {
       method: "POST",
       headers: {
@@ -91,26 +89,57 @@ export function TasksClient({ initialTasks, profiles }: { initialTasks: Task[]; 
     }).catch(() => {});
   }
 
-  return (
-    <div className="p-4 md:p-6 lg:p-8 space-y-6 max-w-[1400px] mx-auto">
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold">التاسكات</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{filtered.length} تاسك</p>
-        </div>
-        <Button asChild variant="gradient" size="sm">
-          <Link href="/tasks/new"><Plus className="h-4 w-4" /> تاسك جديد</Link>
-        </Button>
-      </div>
+  const activeFilters = (status !== "all" ? 1 : 0) + (assignee !== "all" ? 1 : 0);
 
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute top-1/2 -translate-y-1/2 start-3 h-4 w-4 text-muted-foreground pointer-events-none" />
-          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="دور بالعنوان، العميل، أو التفاصيل..." className="ps-9" />
+  return (
+    <div className="fade-in">
+      {/* Page header */}
+      <section className="border-b border-border px-4 md:px-8 lg:px-10 py-6">
+        <div className="max-w-[1400px] mx-auto">
+          <div className="flex items-end justify-between gap-3 flex-wrap">
+            <div>
+              <div className="section-label mb-1">Tasks</div>
+              <div className="flex items-baseline gap-3">
+                <h1 className="text-3xl font-bold tracking-tight">التاسكات</h1>
+                <span className="text-sm text-muted-foreground tabular">
+                  {filtered.length} {filtered.length !== tasks.length && `/ ${tasks.length}`}
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Tabs value={view} onValueChange={(v) => setView(v as "table" | "kanban")}>
+                <TabsList>
+                  <TabsTrigger value="table"><TableIcon className="h-3 w-3" /> جدول</TabsTrigger>
+                  <TabsTrigger value="kanban"><LayoutGrid className="h-3 w-3" /> بورد</TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <Button asChild variant="default" size="sm">
+                <Link href="/tasks/new">
+                  <Plus className="h-3.5 w-3.5" />
+                  تاسك جديد
+                </Link>
+              </Button>
+            </div>
+          </div>
         </div>
-        <div className="flex gap-2">
+      </section>
+
+      {/* Filters */}
+      <section className="border-b border-border px-4 md:px-8 lg:px-10 py-3">
+        <div className="max-w-[1400px] mx-auto flex items-center gap-2 flex-wrap">
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute top-1/2 -translate-y-1/2 start-3 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="دور بالعنوان، العميل، أو التفاصيل..."
+              className="ps-9 h-8 text-xs"
+            />
+          </div>
           <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-auto min-w-[140px] h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">كل الحالات</SelectItem>
               {STATUS_ORDER.map((s) => (
@@ -119,7 +148,9 @@ export function TasksClient({ initialTasks, profiles }: { initialTasks: Task[]; 
             </SelectContent>
           </Select>
           <Select value={assignee} onValueChange={setAssignee}>
-            <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-auto min-w-[140px] h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">كل التيم</SelectItem>
               {profiles.map((p) => (
@@ -127,21 +158,34 @@ export function TasksClient({ initialTasks, profiles }: { initialTasks: Task[]; 
               ))}
             </SelectContent>
           </Select>
+          {activeFilters > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 text-xs text-muted-foreground"
+              onClick={() => {
+                setStatus("all");
+                setAssignee("all");
+                setSearch("");
+              }}
+            >
+              مسح الفلاتر
+            </Button>
+          )}
         </div>
-      </div>
+      </section>
 
-      <Tabs value={view} onValueChange={(v) => setView(v as "table" | "kanban")}>
-        <TabsList>
-          <TabsTrigger value="table"><TableIcon className="h-4 w-4" /> جدول</TabsTrigger>
-          <TabsTrigger value="kanban"><LayoutGrid className="h-4 w-4" /> بورد</TabsTrigger>
-        </TabsList>
-        <TabsContent value="table">
-          <TaskTable tasks={filtered} profileMap={profileMap} onStatusChange={changeStatus} />
-        </TabsContent>
-        <TabsContent value="kanban">
-          <TaskKanban tasks={filtered} profileMap={profileMap} onStatusChange={changeStatus} />
-        </TabsContent>
-      </Tabs>
+      {/* Body */}
+      <section className="px-4 md:px-8 lg:px-10 py-6 max-w-[1400px] mx-auto">
+        <Tabs value={view} className="-mt-4">
+          <TabsContent value="table" className="m-0">
+            <TaskTable tasks={filtered} profileMap={profileMap} onStatusChange={changeStatus} />
+          </TabsContent>
+          <TabsContent value="kanban" className="m-0">
+            <TaskKanban tasks={filtered} profileMap={profileMap} onStatusChange={changeStatus} />
+          </TabsContent>
+        </Tabs>
+      </section>
     </div>
   );
 }

@@ -49,14 +49,14 @@ export function RegisterForm() {
 
   return (
     <div className="space-y-4">
-      <Button type="button" variant="outline" className="w-full h-11" onClick={onGoogle} disabled={googleLoading}>
+      <Button type="button" variant="secondary" className="w-full h-10" onClick={onGoogle} disabled={googleLoading}>
         {googleLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <GoogleIcon />}
         سجل بـ Google
       </Button>
       <div className="relative">
         <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-3 text-muted-foreground">أو بإيميلك</span>
+          <span className="bg-card/60 backdrop-blur px-3 text-muted-foreground">أو بإيميلك</span>
         </div>
       </div>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -75,7 +75,7 @@ export function RegisterForm() {
           <Input id="password" type="password" {...form.register("password")} placeholder="6 حروف على الأقل" />
           {form.formState.errors.password && <p className="text-xs text-destructive">{form.formState.errors.password.message}</p>}
         </div>
-        <Button type="submit" variant="gradient" className="w-full h-11" disabled={loading}>
+        <Button type="submit" variant="default" className="w-full h-10" disabled={loading}>
           {loading && <Loader2 className="h-4 w-4 animate-spin" />}
           اعمل حسابي
         </Button>

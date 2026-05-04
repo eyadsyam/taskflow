@@ -14,12 +14,12 @@ export function TaskStatusBadge({ status, className }: { status: TaskStatus; cla
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium",
+        "inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[11px] font-medium tracking-wide",
         STATUS_COLORS[status],
         className,
       )}
     >
-      <Icon className="h-3.5 w-3.5" />
+      <Icon className="h-3 w-3" />
       {STATUS_LABELS[status]}
     </span>
   );

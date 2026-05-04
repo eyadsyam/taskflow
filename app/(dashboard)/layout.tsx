@@ -22,9 +22,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <PresenceTracker />
       <div className="min-h-screen bg-background">
         <Sidebar />
-        <div className="lg:pr-64">
+        <div className="lg:pr-[260px]">
           <Header />
-          <main className="min-h-[calc(100vh-4rem)]">{children}</main>
+          <main className="min-h-[calc(100vh-52px)]">{children}</main>
         </div>
       </div>
     </ProfileContext>

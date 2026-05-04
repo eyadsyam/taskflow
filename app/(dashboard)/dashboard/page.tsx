@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import type { Task, Profile } from "@/lib/database.types";
 import { TaskStatusBadge } from "@/components/tasks/TaskStatusBadge";
@@ -7,7 +6,17 @@ import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { DashboardCharts } from "./charts";
 import { formatCurrency, relativeTime, getUserStatus } from "@/lib/utils";
-import { ListChecks, Wallet, CheckCircle2, MessageCircle, Plus, ArrowLeft, Activity, TrendingUp, Clock } from "lucide-react";
+import {
+  ArrowUpRight,
+  Plus,
+  Sparkles,
+  TrendingUp,
+  Activity,
+  Wallet,
+  CheckCircle2,
+  ListChecks,
+  MessageCircle,
+} from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -23,11 +32,16 @@ export default async function DashboardPage() {
   const profiles = (rawProfiles ?? []) as Profile[];
   const active = all.filter((t) => t.status !== "paid_closed").length;
   const pendingPayment = all.filter((t) => t.status === "done_pending_payment").length;
-  const now = new Date();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthStart = new Date();
+  monthStart.setDate(1);
+  monthStart.setHours(0, 0, 0, 0);
   const doneThisMonth = all.filter(
     (t) => (t.status === "paid_closed" || t.status === "done_pending_payment") && new Date(t.updated_at) >= monthStart,
   ).length;
+
+  const totalValue = all
+    .filter((t) => t.status !== "paid_closed")
+    .reduce((sum, t) => sum + (t.price ?? 0), 0);
 
   const onlineMembers = profiles.filter((p) => getUserStatus(p.last_seen_at) === "online");
 
@@ -51,172 +65,268 @@ export default async function DashboardPage() {
   }
   const timeline = Array.from(byDay.entries()).map(([date, value]) => ({ date: date.slice(5), value }));
 
-  const recent = all.slice(0, 6);
+  const recent = all.slice(0, 5);
+
+  // Greeting based on hour
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "صباح الفل" : hour < 17 ? "مساء الفل" : "مساء النور";
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 space-y-8 fade-in max-w-[1400px] mx-auto">
-      {/* Top bar: greeting + actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold">نورت يا تيم</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            {onlineMembers.length} أونلاين دلوقتي من {profiles.length}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button asChild variant="outline" size="sm">
-            <Link href="/chat"><MessageCircle className="h-4 w-4" /> الشات</Link>
-          </Button>
-          <Button asChild variant="gradient" size="sm">
-            <Link href="/tasks/new"><Plus className="h-4 w-4" /> تاسك جديد</Link>
-          </Button>
-        </div>
-      </div>
+    <div className="fade-in">
+      {/* HERO STRIP — asymmetric, immediate context */}
+      <section className="relative border-b border-border">
+        {/* Subtle grid background */}
+        <div className="absolute inset-0 bg-grid pointer-events-none opacity-50" />
 
-      {/* KPI strip */}
-      <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
-        <KpiCard
-          icon={ListChecks}
-          label="تاسكات شغالة"
-          value={active}
-          accentColor="border-blue-500"
-          iconBg="bg-blue-500/10 text-blue-600 dark:text-blue-400"
-        />
-        <KpiCard
-          icon={Wallet}
-          label="مستنيين الفلوس"
-          value={pendingPayment}
-          accentColor="border-amber-500"
-          iconBg="bg-amber-500/10 text-amber-600 dark:text-amber-400"
-        />
-        <KpiCard
-          icon={CheckCircle2}
-          label="خلصوا الشهر ده"
-          value={doneThisMonth}
-          accentColor="border-emerald-500"
-          iconBg="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-        />
-        <KpiCard
-          icon={Activity}
-          label="أونلاين"
-          value={onlineMembers.length}
-          suffix={`/${profiles.length}`}
-          accentColor="border-violet-500"
-          iconBg="bg-violet-500/10 text-violet-600 dark:text-violet-400"
-        />
-      </div>
+        <div className="relative px-4 md:px-8 lg:px-10 py-8">
+          <div className="grid lg:grid-cols-[1fr_auto] gap-6 lg:gap-10 items-end max-w-[1400px] mx-auto">
+            {/* Left: greeting + headline number */}
+            <div>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                </span>
+                <span>{greeting}</span>
+                <span className="text-border">·</span>
+                <span>{onlineMembers.length} أونلاين</span>
+              </div>
 
-      {/* Online team strip */}
-      {profiles.length > 0 && (
-        <div className="flex items-center gap-3 overflow-x-auto pb-1 scrollbar-none">
-          <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">التيم:</span>
-          <div className="flex items-center -space-x-2 rtl:space-x-reverse">
-            {profiles.slice(0, 10).map((p) => (
-              <UserAvatar
-                key={p.id}
-                name={p.full_name}
-                src={p.avatar_url}
-                size="sm"
-                status={getUserStatus(p.last_seen_at)}
-                className="ring-2 ring-background"
+              <div className="flex items-baseline gap-3 flex-wrap">
+                <h1 className="text-5xl md:text-6xl font-bold tracking-tight tabular leading-none">
+                  {active}
+                </h1>
+                <p className="text-lg text-muted-foreground">
+                  تاسك شغال
+                </p>
+              </div>
+
+              <div className="mt-3 flex items-center gap-4 flex-wrap">
+                <span className="text-xs text-muted-foreground">
+                  بقيمة <span className="text-foreground font-medium tabular">{formatCurrency(totalValue, "EGP")}</span>
+                </span>
+                {pendingPayment > 0 && (
+                  <span className="text-xs flex items-center gap-1.5 text-amber-400">
+                    <Wallet className="h-3 w-3" />
+                    {pendingPayment} مستنيين الفلوس
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Right: quick actions */}
+            <div className="flex items-center gap-2 lg:justify-end">
+              <Button asChild variant="outline" size="sm">
+                <Link href="/chat">
+                  <MessageCircle className="h-3.5 w-3.5" />
+                  افتح الشات
+                </Link>
+              </Button>
+              <Button asChild variant="default" size="sm">
+                <Link href="/tasks/new">
+                  <Plus className="h-3.5 w-3.5" />
+                  تاسك جديد
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* MAIN CONTENT — asymmetric grid */}
+      <section className="px-4 md:px-8 lg:px-10 py-8 max-w-[1400px] mx-auto">
+        <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
+          {/* Left column — main content */}
+          <div className="space-y-6 min-w-0">
+            {/* Stat cards row */}
+            <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
+              <StatTile
+                label="شغالة"
+                value={active}
+                icon={ListChecks}
+                accent="bg-blue-500/15 text-blue-400 border-blue-500/30"
               />
-            ))}
-          </div>
-          {profiles.length > 10 && (
-            <span className="text-xs text-muted-foreground">+{profiles.length - 10}</span>
-          )}
-          <Link href="/team" className="text-xs text-primary hover:underline whitespace-nowrap mr-auto">
-            شوف الكل <ArrowLeft className="inline h-3 w-3" />
-          </Link>
-        </div>
-      )}
+              <StatTile
+                label="مستنيين"
+                value={pendingPayment}
+                icon={Wallet}
+                accent="bg-amber-500/15 text-amber-400 border-amber-500/30"
+              />
+              <StatTile
+                label="خلصت"
+                value={doneThisMonth}
+                icon={CheckCircle2}
+                accent="bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+                hint="الشهر ده"
+              />
+              <StatTile
+                label="أونلاين"
+                value={onlineMembers.length}
+                icon={Activity}
+                accent="bg-primary/15 text-primary border-primary/30"
+                hint={`من ${profiles.length}`}
+              />
+            </div>
 
-      {/* Charts - full width, side by side */}
-      <DashboardCharts statusCounts={statusCounts} timeline={timeline} />
+            {/* Charts */}
+            <DashboardCharts statusCounts={statusCounts} timeline={timeline} />
 
-      {/* Recent tasks */}
-      <section>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-muted-foreground" />
-            آخر التاسكات
-          </h2>
-          <Button asChild variant="ghost" size="sm">
-            <Link href="/tasks">شوف الكل <ArrowLeft className="h-4 w-4" /></Link>
-          </Button>
-        </div>
-
-        {recent.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border bg-muted/30 py-16 text-center">
-            <Image src="/assets/empty-tasks.svg" alt="" width={160} height={120} className="mx-auto mb-4 opacity-60" />
-            <p className="font-medium">مفيش تاسكات لسه</p>
-            <p className="text-sm text-muted-foreground mt-1 mb-4">ابدأ بأول تاسك ليك</p>
-            <Button asChild variant="gradient" size="sm">
-              <Link href="/tasks/new"><Plus className="h-4 w-4" /> تاسك جديد</Link>
-            </Button>
-          </div>
-        ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {recent.map((t) => (
-              <Link
-                key={t.id}
-                href={`/tasks/${t.id}`}
-                className="group rounded-xl border border-border bg-card p-4 hover:border-primary/40 hover:shadow-md transition-all"
-              >
-                <div className="flex items-start justify-between gap-2 mb-3">
-                  <TaskStatusBadge status={t.status} />
-                  <span className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    {relativeTime(t.updated_at)}
-                  </span>
+            {/* Recent tasks — table style */}
+            <div className="rounded-lg border border-border bg-card overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-3 border-b border-border">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-sm font-semibold">آخر النشاط</span>
                 </div>
-                <h3 className="font-medium text-sm truncate group-hover:text-primary transition-colors">
-                  {t.title}
-                </h3>
-                <p className="text-xs text-muted-foreground mt-1 truncate">{t.client_name}</p>
-                <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between">
-                  <span className="text-sm font-semibold tabular-nums">
-                    {formatCurrency(t.price, t.currency ?? "EGP")}
-                  </span>
+                <Button asChild variant="ghost" size="sm" className="h-7 text-xs">
+                  <Link href="/tasks">
+                    شوف الكل
+                    <ArrowUpRight className="h-3 w-3" />
+                  </Link>
+                </Button>
+              </div>
+
+              {recent.length === 0 ? (
+                <EmptyTasks />
+              ) : (
+                <div className="divide-y divide-border">
+                  {recent.map((t) => (
+                    <Link
+                      key={t.id}
+                      href={`/tasks/${t.id}`}
+                      className="flex items-center gap-4 px-5 py-3 hover:bg-elevated/40 transition-colors group"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-sm truncate group-hover:text-primary transition-colors">
+                          {t.title}
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-2">
+                          <span className="truncate">{t.client_name}</span>
+                          <span className="text-border">·</span>
+                          <span>{relativeTime(t.updated_at)}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <span className="hidden sm:inline text-xs font-medium tabular text-muted-foreground">
+                          {formatCurrency(t.price, t.currency ?? "EGP")}
+                        </span>
+                        <TaskStatusBadge status={t.status} />
+                      </div>
+                    </Link>
+                  ))}
                 </div>
-              </Link>
-            ))}
+              )}
+            </div>
           </div>
-        )}
+
+          {/* Right column — sidebar widgets */}
+          <aside className="space-y-6 lg:sticky lg:top-[68px] lg:self-start">
+            {/* Team panel */}
+            <div className="rounded-lg border border-border bg-card overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+                <span className="section-label">التيم</span>
+                <span className="text-[10px] text-muted-foreground tabular">
+                  {profiles.length}
+                </span>
+              </div>
+              <div className="p-2 max-h-[280px] overflow-y-auto scrollbar-thin">
+                {profiles.slice(0, 8).map((p) => {
+                  const status = getUserStatus(p.last_seen_at);
+                  return (
+                    <div
+                      key={p.id}
+                      className="flex items-center gap-2.5 p-2 rounded-md hover:bg-elevated/60 transition-colors"
+                    >
+                      <UserAvatar
+                        name={p.full_name}
+                        src={p.avatar_url}
+                        size="sm"
+                        status={status}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-medium truncate">{p.full_name}</div>
+                        <div className="text-[10px] text-muted-foreground truncate">
+                          {p.status_message ||
+                            p.job_title ||
+                            (status === "online" ? "أونلاين" : "مش هنا")}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="border-t border-border p-2">
+                <Button asChild variant="ghost" size="sm" className="w-full h-7 text-xs">
+                  <Link href="/team">شوف الكل ({profiles.length})</Link>
+                </Button>
+              </div>
+            </div>
+
+            {/* Tip card */}
+            <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 relative overflow-hidden">
+              <div className="absolute -top-8 -end-8 h-24 w-24 rounded-full bg-primary/20 blur-2xl" />
+              <div className="relative">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="h-6 w-6 rounded grid place-items-center bg-primary/15 border border-primary/30">
+                    <Sparkles className="h-3 w-3 text-primary" />
+                  </div>
+                  <span className="text-xs font-semibold">عارف؟</span>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  في تاب التاسكات تقدر تسحب أي تاسك من حالة لحالة من غير ما تفتحها.
+                </p>
+              </div>
+            </div>
+          </aside>
+        </div>
       </section>
     </div>
   );
 }
 
-function KpiCard({
-  icon: Icon,
+function StatTile({
   label,
   value,
-  suffix,
-  accentColor,
-  iconBg,
+  icon: Icon,
+  accent,
+  hint,
 }: {
-  icon: React.ComponentType<{ className?: string }>;
   label: string;
-  value: number | string;
-  suffix?: string;
-  accentColor: string;
-  iconBg: string;
+  value: number;
+  icon: React.ComponentType<{ className?: string }>;
+  accent: string;
+  hint?: string;
 }) {
   return (
-    <div className={`rounded-xl border bg-card p-4 border-s-4 ${accentColor}`}>
-      <div className="flex items-center gap-3">
-        <div className={`h-10 w-10 rounded-lg grid place-items-center shrink-0 ${iconBg}`}>
-          <Icon className="h-5 w-5" />
+    <div className="rounded-lg border border-border bg-card p-4 hover:border-border-strong transition-colors">
+      <div className="flex items-center justify-between mb-3">
+        <div className={`h-7 w-7 grid place-items-center rounded border ${accent}`}>
+          <Icon className="h-3.5 w-3.5" />
         </div>
-        <div className="min-w-0">
-          <div className="text-xs text-muted-foreground truncate">{label}</div>
-          <div className="text-2xl font-bold tabular-nums leading-tight">
-            {value}
-            {suffix && <span className="text-sm font-normal text-muted-foreground">{suffix}</span>}
-          </div>
-        </div>
+        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+          {label}
+        </span>
       </div>
+      <div className="text-3xl font-bold tabular leading-none">{value}</div>
+      {hint && <div className="mt-1 text-[10px] text-muted-foreground">{hint}</div>}
+    </div>
+  );
+}
+
+function EmptyTasks() {
+  return (
+    <div className="px-5 py-12 text-center bg-dots">
+      <div className="mx-auto h-12 w-12 rounded-lg border border-border bg-elevated grid place-items-center mb-3">
+        <ListChecks className="h-5 w-5 text-muted-foreground" />
+      </div>
+      <p className="text-sm font-medium">مفيش تاسكات لسه</p>
+      <p className="text-xs text-muted-foreground mt-1 mb-4">ابدأ بأول تاسك ليك</p>
+      <Button asChild size="sm">
+        <Link href="/tasks/new">
+          <Plus className="h-3.5 w-3.5" />
+          تاسك جديد
+        </Link>
+      </Button>
     </div>
   );
 }

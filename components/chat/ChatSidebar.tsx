@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Hash, Plus, Search, ChevronDown, ChevronLeft, MessageSquare, Users } from "lucide-react";
+import { Hash, Plus, Search, ChevronDown, ChevronLeft, MessageSquare } from "lucide-react";
 import { cn, getUserStatus } from "@/lib/utils";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,7 @@ export function ChatSidebar({ channels, dms, teamMembers, currentUserId }: Props
   const params = useParams();
   const router = useRouter();
   const activeId = params?.id as string;
-  
+
   const [search, setSearch] = useState("");
   const [showChannels, setShowChannels] = useState(true);
   const [showDMs, setShowDMs] = useState(true);
@@ -32,7 +32,6 @@ export function ChatSidebar({ channels, dms, teamMembers, currentUserId }: Props
   const [newChannelOpen, setNewChannelOpen] = useState(false);
   const [members, setMembers] = useState(teamMembers);
 
-  // Subscribe to profile changes for live presence
   useEffect(() => {
     const supabase = createClient();
     const channel = supabase
@@ -45,10 +44,10 @@ export function ChatSidebar({ channels, dms, teamMembers, currentUserId }: Props
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  const filteredChannels = channels.filter((c) => 
+  const filteredChannels = channels.filter((c) =>
     !search || (c.name?.toLowerCase().includes(search.toLowerCase()))
   );
-  
+
   const filteredMembers = members.filter((m) =>
     !search || m.full_name.toLowerCase().includes(search.toLowerCase())
   );
@@ -63,29 +62,36 @@ export function ChatSidebar({ channels, dms, teamMembers, currentUserId }: Props
   }
 
   return (
-    <aside className="w-64 flex-shrink-0 border-s border-border bg-card/50 flex flex-col">
+    <aside className="w-[260px] flex-shrink-0 border-s border-sidebar-border bg-sidebar flex flex-col">
       {/* Header */}
-      <div className="p-4 border-b border-sidebar-border">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="font-bold text-lg">الشات</h2>
-          <NewChannelDialog 
-            open={newChannelOpen} 
-            onOpenChange={setNewChannelOpen} 
-            currentUserId={currentUserId}
-            onCreated={(id) => {
-              setNewChannelOpen(false);
-              router.push(`/chat/${id}`);
-              router.refresh();
-            }}
-          />
+      <div className="px-4 h-[52px] border-b border-sidebar-border shrink-0 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <h2 className="font-bold text-sm">الشات</h2>
+          <span className="text-[10px] text-muted-foreground tabular bg-elevated px-1.5 py-0.5 rounded">
+            {channels.length + dms.length}
+          </span>
         </div>
+        <NewChannelDialog
+          open={newChannelOpen}
+          onOpenChange={setNewChannelOpen}
+          currentUserId={currentUserId}
+          onCreated={(id) => {
+            setNewChannelOpen(false);
+            router.push(`/chat/${id}`);
+            router.refresh();
+          }}
+        />
+      </div>
+
+      {/* Search */}
+      <div className="px-3 py-2.5 border-b border-sidebar-border">
         <div className="relative">
-          <Search className="absolute end-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+          <Search className="absolute end-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground pointer-events-none" />
           <Input
-            placeholder="دور على حاجة..."
+            placeholder="دور..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pe-10 h-9 text-sm"
+            className="h-7 text-xs pe-7"
           />
         </div>
       </div>
@@ -93,96 +99,103 @@ export function ChatSidebar({ channels, dms, teamMembers, currentUserId }: Props
       {/* Lists */}
       <div className="flex-1 overflow-y-auto scrollbar-thin px-2 py-3 space-y-4">
         {/* Channels */}
-        <div>
-          <button
-            onClick={() => setShowChannels(!showChannels)}
-            className="flex items-center gap-1 w-full px-2 py-1 text-xs font-semibold uppercase text-muted-foreground hover:text-foreground"
-          >
-            {showChannels ? <ChevronDown className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
-            <span>القنوات ({channels.length})</span>
-          </button>
-          {showChannels && (
-            <div className="mt-1 space-y-0.5">
-              {filteredChannels.map((channel) => (
-                <Link
-                  key={channel.id}
-                  href={`/chat/${channel.id}`}
-                  className={cn(
-                    "flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm transition-colors group",
-                    activeId === channel.id 
-                      ? "bg-primary text-primary-foreground" 
-                      : "hover:bg-accent"
-                  )}
-                >
-                  <Hash className="h-4 w-4 shrink-0 opacity-70" />
-                  <span className="truncate">{channel.name}</span>
-                </Link>
-              ))}
-              {filteredChannels.length === 0 && (
-                <div className="px-2.5 py-1 text-xs text-muted-foreground">مفيش قنوات</div>
+        <Section
+          label="القنوات"
+          count={channels.length}
+          open={showChannels}
+          onToggle={() => setShowChannels(!showChannels)}
+        >
+          {filteredChannels.map((channel) => (
+            <Link
+              key={channel.id}
+              href={`/chat/${channel.id}`}
+              className={cn(
+                "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors",
+                activeId === channel.id
+                  ? "bg-elevated text-foreground"
+                  : "text-muted-foreground hover:bg-elevated/60 hover:text-foreground"
               )}
-            </div>
+            >
+              <Hash className="h-3.5 w-3.5 shrink-0 opacity-60" />
+              <span className="truncate">{channel.name}</span>
+            </Link>
+          ))}
+          {filteredChannels.length === 0 && (
+            <div className="px-2 py-1 text-[11px] text-muted-foreground/60">مفيش قنوات</div>
           )}
-        </div>
+        </Section>
 
         {/* DMs */}
         {dms.length > 0 && (
-          <div>
-            <button
-              onClick={() => setShowDMs(!showDMs)}
-              className="flex items-center gap-1 w-full px-2 py-1 text-xs font-semibold uppercase text-muted-foreground hover:text-foreground"
-            >
-              {showDMs ? <ChevronDown className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
-              <span>رسايل خاصة ({dms.length})</span>
-            </button>
-            {showDMs && (
-              <div className="mt-1 space-y-0.5">
-                {dms.map((dm) => (
-                  <DmItem key={dm.id} dmId={dm.id} activeId={activeId} currentUserId={currentUserId} members={members} />
-                ))}
-              </div>
-            )}
-          </div>
+          <Section
+            label="رسايل خاصة"
+            count={dms.length}
+            open={showDMs}
+            onToggle={() => setShowDMs(!showDMs)}
+          >
+            {dms.map((dm) => (
+              <DmItem key={dm.id} dmId={dm.id} activeId={activeId} currentUserId={currentUserId} members={members} />
+            ))}
+          </Section>
         )}
 
-        {/* Team Members - click to start DM */}
-        <div>
-          <button
-            onClick={() => setShowMembers(!showMembers)}
-            className="flex items-center gap-1 w-full px-2 py-1 text-xs font-semibold uppercase text-muted-foreground hover:text-foreground"
-          >
-            {showMembers ? <ChevronDown className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
-            <span>التيم ({members.length})</span>
-          </button>
-          {showMembers && (
-            <div className="mt-1 space-y-0.5">
-              {filteredMembers.map((member) => {
-                const status = getUserStatus(member.last_seen_at);
-                return (
-                  <button
-                    key={member.id}
-                    onClick={() => startDM(member.id)}
-                    className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm w-full text-right hover:bg-accent transition-colors group"
-                  >
-                    <UserAvatar name={member.full_name} src={member.avatar_url} size="sm" status={status} />
-                    <div className="flex-1 min-w-0">
-                      <div className="truncate text-sm">{member.full_name}</div>
-                      {member.status_message && (
-                        <div className="text-xs text-muted-foreground truncate">{member.status_message}</div>
-                      )}
-                    </div>
-                    <MessageSquare className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </button>
-                );
-              })}
-              {filteredMembers.length === 0 && (
-                <div className="px-2 py-1 text-xs text-muted-foreground">مفيش حد تاني</div>
-              )}
-            </div>
+        {/* Team Members */}
+        <Section
+          label="التيم"
+          count={members.length}
+          open={showMembers}
+          onToggle={() => setShowMembers(!showMembers)}
+        >
+          {filteredMembers.map((member) => {
+            const status = getUserStatus(member.last_seen_at);
+            return (
+              <button
+                key={member.id}
+                onClick={() => startDM(member.id)}
+                className="group flex items-center gap-2 rounded-md px-2 py-1.5 text-sm w-full text-right hover:bg-elevated/60 transition-colors"
+              >
+                <UserAvatar name={member.full_name} src={member.avatar_url} size="xs" status={status} />
+                <span className="flex-1 truncate text-xs text-muted-foreground group-hover:text-foreground">
+                  {member.full_name}
+                </span>
+                <MessageSquare className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-60 transition-opacity" />
+              </button>
+            );
+          })}
+          {filteredMembers.length === 0 && (
+            <div className="px-2 py-1 text-[11px] text-muted-foreground/60">مفيش حد تاني</div>
           )}
-        </div>
+        </Section>
       </div>
     </aside>
+  );
+}
+
+function Section({
+  label,
+  count,
+  open,
+  onToggle,
+  children,
+}: {
+  label: string;
+  count: number;
+  open: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <button
+        onClick={onToggle}
+        className="flex items-center gap-1.5 w-full px-2 py-1 section-label hover:text-foreground transition-colors"
+      >
+        {open ? <ChevronDown className="h-2.5 w-2.5" /> : <ChevronLeft className="h-2.5 w-2.5" />}
+        <span className="flex-1 text-right">{label}</span>
+        <span className="text-[10px] tabular opacity-60">{count}</span>
+      </button>
+      {open && <div className="mt-1 space-y-0.5">{children}</div>}
+    </div>
   );
 }
 
@@ -211,28 +224,30 @@ function DmItem({ dmId, activeId, currentUserId, members }: {
   }, [dmId, currentUserId, members]);
 
   if (!partner) return null;
-  
+
   const status = getUserStatus(partner.last_seen_at);
 
   return (
     <Link
       href={`/chat/${dmId}`}
       className={cn(
-        "flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors",
-        activeId === dmId ? "bg-primary text-primary-foreground" : "hover:bg-accent"
+        "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors",
+        activeId === dmId
+          ? "bg-elevated text-foreground"
+          : "text-muted-foreground hover:bg-elevated/60 hover:text-foreground"
       )}
     >
-      <UserAvatar name={partner.full_name} src={partner.avatar_url} size="sm" status={status} />
-      <span className="truncate">{partner.full_name}</span>
+      <UserAvatar name={partner.full_name} src={partner.avatar_url} size="xs" status={status} />
+      <span className="truncate text-xs">{partner.full_name}</span>
     </Link>
   );
 }
 
-function NewChannelDialog({ 
-  open, 
-  onOpenChange, 
+function NewChannelDialog({
+  open,
+  onOpenChange,
   currentUserId,
-  onCreated 
+  onCreated,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -271,8 +286,8 @@ function NewChannelDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon-sm" title="قناة جديدة">
-          <Plus className="h-4 w-4" />
+        <Button variant="ghost" size="icon-sm" title="قناة جديدة" className="h-7 w-7">
+          <Plus className="h-3.5 w-3.5" />
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -297,7 +312,7 @@ function NewChannelDialog({
               onChange={(e) => setDescription(e.target.value)}
             />
           </div>
-          <Button variant="gradient" onClick={handleCreate} disabled={creating} className="w-full">
+          <Button onClick={handleCreate} disabled={creating} className="w-full">
             {creating ? "بيعمل..." : "اعمل القناة"}
           </Button>
         </div>
