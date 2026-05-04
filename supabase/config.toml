@@ -1,0 +1,7 @@
+project_id = "taskflow"
+
+[functions.on-task-comment]
+verify_jwt = true
+
+[functions.on-task-status-change]
+verify_jwt = true
