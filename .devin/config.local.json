@@ -14,7 +14,13 @@
       "Exec(npx vercel)",
       "Exec(gh auth)",
       "Exec(gh repo)",
-      "Exec(npx tsc)"
+      "Exec(npx tsc)",
+      "Exec(git push)",
+      "Exec(npx plugins)",
+      "Exec(jq)",
+      "Exec(rm)",
+      "Exec(mkdir)",
+      "Exec(git status)"
     ]
   }
 }

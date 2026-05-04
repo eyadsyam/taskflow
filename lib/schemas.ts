@@ -39,6 +39,5 @@ export const registerSchema = z.object({
   full_name: z.string().min(2, "الاسم مطلوب").max(120),
   email: z.string().email("إيميل غير صالح"),
   password: z.string().min(6, "كلمة السر 6 حروف على الأقل"),
-  role: z.enum(["client_team", "work_team"]).default("work_team"),
 });
 export type RegisterValues = z.infer<typeof registerSchema>;

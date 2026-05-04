@@ -6,8 +6,8 @@ import { Providers } from "@/components/providers";
 const cairo = Cairo({ subsets: ["arabic", "latin"], variable: "--font-cairo", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "TaskFlow — إدارة مهام الفريق",
-  description: "منصة داخلية لإدارة المهام بين تيم العلاقات وتيم الشغل",
+  title: "TaskFlow — منصة الفريق",
+  description: "منصة عمل تشاركية للفريق - محادثات، مهام، وملفات في مكان واحد",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

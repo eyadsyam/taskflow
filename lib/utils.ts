@@ -28,9 +28,8 @@ export const STATUS_ORDER: TaskStatus[] = [
 ];
 
 export const ROLE_LABELS: Record<UserRole, string> = {
-  admin: "أدمن",
-  client_team: "تيم العلاقات",
-  work_team: "تيم الشغل",
+  admin: "مسؤول",
+  member: "عضو",
 };
 
 export function formatCurrency(amount: number | null, currency = "EGP"): string {
@@ -60,16 +59,106 @@ export function formatDateTime(d: string | null | undefined): string {
   }
 }
 
+export function formatTime(d: string | null | undefined): string {
+  if (!d) return "—";
+  try {
+    return new Date(d).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
+  } catch {
+    return d;
+  }
+}
+
 export function relativeTime(d: string | null | undefined): string {
   if (!d) return "—";
   const diff = Date.now() - new Date(d).getTime();
   const sec = Math.round(diff / 1000);
   if (sec < 60) return "الآن";
   const min = Math.round(sec / 60);
-  if (min < 60) return `منذ ${min} دقيقة`;
+  if (min < 60) return `منذ ${min} د`;
   const hr = Math.round(min / 60);
-  if (hr < 24) return `منذ ${hr} ساعة`;
+  if (hr < 24) return `منذ ${hr} س`;
   const day = Math.round(hr / 24);
-  if (day < 30) return `منذ ${day} يوم`;
+  if (day < 7) return `منذ ${day} يوم`;
   return formatDate(d);
+}
+
+export function formatFileSize(bytes: number): string {
+  if (bytes === 0) return "0 B";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB", "TB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+}
+
+export function getInitials(name: string): string {
+  return name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
+}
+
+// Generate a stable color from a string (for avatars without images)
+export function getAvatarColor(seed: string): string {
+  const colors = [
+    "bg-violet-500", "bg-blue-500", "bg-cyan-500", "bg-emerald-500",
+    "bg-pink-500", "bg-rose-500", "bg-amber-500", "bg-indigo-500",
+    "bg-purple-500", "bg-teal-500", "bg-fuchsia-500", "bg-sky-500",
+  ];
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = seed.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
+}
+
+export function isUserOnline(lastSeenAt: string | null): boolean {
+  if (!lastSeenAt) return false;
+  const diff = Date.now() - new Date(lastSeenAt).getTime();
+  return diff < 60_000; // 1 minute
+}
+
+export function getUserStatus(lastSeenAt: string | null): "online" | "away" | "offline" {
+  if (!lastSeenAt) return "offline";
+  const diff = Date.now() - new Date(lastSeenAt).getTime();
+  if (diff < 60_000) return "online";
+  if (diff < 5 * 60_000) return "away";
+  return "offline";
+}
+
+// Format message timestamps in chat style
+export function formatMessageTime(d: string): string {
+  const date = new Date(d);
+  const now = new Date();
+  const isToday = date.toDateString() === now.toDateString();
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const isYesterday = date.toDateString() === yesterday.toDateString();
+  
+  if (isToday) {
+    return date.toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
+  }
+  if (isYesterday) {
+    return "أمس " + date.toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
+  }
+  return date.toLocaleString("ar-EG", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
+export function groupMessagesByDate<T extends { created_at: string }>(messages: T[]): Map<string, T[]> {
+  const groups = new Map<string, T[]>();
+  for (const msg of messages) {
+    const date = new Date(msg.created_at).toDateString();
+    if (!groups.has(date)) groups.set(date, []);
+    groups.get(date)!.push(msg);
+  }
+  return groups;
+}
+
+export function getDateLabel(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const isToday = date.toDateString() === now.toDateString();
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const isYesterday = date.toDateString() === yesterday.toDateString();
+  
+  if (isToday) return "اليوم";
+  if (isYesterday) return "أمس";
+  return date.toLocaleDateString("ar-EG", { weekday: "long", day: "numeric", month: "long" });
 }

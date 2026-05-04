@@ -8,12 +8,12 @@ export const dynamic = "force-dynamic";
 export default async function NewTaskPage() {
   const supabase = createClient();
   const { data: rawProfiles } = await supabase.from("profiles").select("*").order("full_name");
-  const workTeam = ((rawProfiles ?? []) as Profile[]).filter((p) => p.role !== "client_team");
+  const teamMembers = ((rawProfiles ?? []) as Profile[]);
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-3xl mx-auto p-6">
       <Card>
-        <CardHeader><CardTitle>تاسك جديد</CardTitle></CardHeader>
-        <CardContent><TaskForm workTeam={workTeam} /></CardContent>
+        <CardHeader><CardTitle>مهمة جديدة</CardTitle></CardHeader>
+        <CardContent><TaskForm workTeam={teamMembers} /></CardContent>
       </Card>
     </div>
   );

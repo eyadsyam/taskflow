@@ -16,12 +16,12 @@ export default async function EditTaskPage({ params }: { params: { id: string } 
   const task = rawTask as unknown as Task;
   if (task.status === "paid_closed") redirect(`/tasks/${params.id}?error=locked`);
 
-  const workTeam = ((rawProfiles ?? []) as Profile[]).filter((p) => p.role !== "client_team");
+  const teamMembers = ((rawProfiles ?? []) as Profile[]);
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-3xl mx-auto p-6">
       <Card>
-        <CardHeader><CardTitle>تعديل التاسك</CardTitle></CardHeader>
-        <CardContent><TaskForm task={task as Task} workTeam={workTeam} /></CardContent>
+        <CardHeader><CardTitle>تعديل المهمة</CardTitle></CardHeader>
+        <CardContent><TaskForm task={task as Task} workTeam={teamMembers} /></CardContent>
       </Card>
     </div>
   );

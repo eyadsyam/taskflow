@@ -1,11 +1,13 @@
-// Hand-authored types (run `npm run db:types` to regenerate from Supabase schema).
+// Hand-authored types for TaskFlow single-team workspace
 export type TaskStatus =
   | "pending_client"
   | "in_progress"
   | "done_pending_payment"
   | "paid_closed";
 
-export type UserRole = "client_team" | "work_team" | "admin";
+export type UserRole = "admin" | "member";
+
+export type ConversationType = "channel" | "dm" | "task";
 
 export type Profile = {
   id: string;
@@ -15,21 +17,22 @@ export type Profile = {
   avatar_url: string | null;
   created_at: string;
   phone: string | null;
-  company_name: string | null;
   job_title: string | null;
   bio: string | null;
   preferred_language: string;
-  notification_preferences: NotificationPreferences;
   onboarding_completed: boolean;
   timezone: string;
+  status_message: string | null;
+  last_seen_at: string | null;
 };
 
-export type NotificationPreferences = {
-  email_new_task?: boolean;
-  email_task_assigned?: boolean;
-  email_task_status_change?: boolean;
-  email_comments?: boolean;
-  email_daily_digest?: boolean;
+export type TeamSettings = {
+  id: number;
+  team_name: string;
+  team_logo: string | null;
+  primary_color: string;
+  created_at: string;
+  updated_at: string;
 };
 
 export type Task = {
@@ -51,6 +54,7 @@ export type Task = {
   updated_at: string;
 };
 
+// Legacy types for old comments/history tables (still in DB but not used in UI)
 export type TaskComment = {
   id: string;
   task_id: string;
@@ -70,42 +74,86 @@ export type TaskHistory = {
   changed_at: string;
 };
 
+export type Conversation = {
+  id: string;
+  type: ConversationType;
+  name: string | null;
+  description: string | null;
+  icon: string | null;
+  task_id: string | null;
+  is_private: boolean;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+  last_message_at: string;
+};
+
+export type ConversationMember = {
+  conversation_id: string;
+  user_id: string;
+  joined_at: string;
+  last_read_at: string;
+  is_admin: boolean;
+  is_muted: boolean;
+};
+
+export type Message = {
+  id: string;
+  conversation_id: string;
+  author_id: string;
+  content: string | null;
+  reply_to_id: string | null;
+  is_edited: boolean;
+  is_pinned: boolean;
+  edited_at: string | null;
+  created_at: string;
+};
+
+export type MessageAttachment = {
+  id: string;
+  message_id: string;
+  file_url: string;
+  file_name: string;
+  file_size: number;
+  file_type: string | null;
+  created_at: string;
+};
+
+export type MessageReaction = {
+  id: string;
+  message_id: string;
+  user_id: string;
+  emoji: string;
+  created_at: string;
+};
+
+// Composed types for UI
+export type MessageWithRelations = Message & {
+  author: Profile;
+  attachments: MessageAttachment[];
+  reactions: MessageReaction[];
+  reply_to?: Message & { author: Profile };
+};
+
+export type ConversationWithLastMessage = Conversation & {
+  last_message?: Message & { author: Profile };
+  unread_count?: number;
+  members?: Profile[];
+};
+
 type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export interface Database {
   public: {
     Tables: {
-      profiles: {
-        Row: Profile;
-        Insert: Partial<Profile> & Pick<Profile, "id" | "full_name" | "email" | "role">;
-        Update: Partial<Profile>;
-        Relationships: [];
-      };
-      tasks: {
-        Row: Task;
-        Insert: Omit<Task, "id" | "created_at" | "updated_at" | "is_locked" | "tags" | "attachments" | "currency"> & {
-          id?: string;
-          tags?: string[] | null;
-          attachments?: string[] | null;
-          currency?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: Partial<Omit<Task, "id" | "is_locked" | "created_at">>;
-        Relationships: [];
-      };
-      task_comments: {
-        Row: TaskComment;
-        Insert: Omit<TaskComment, "id" | "created_at"> & { id?: string; created_at?: string };
-        Update: Partial<TaskComment>;
-        Relationships: [];
-      };
-      task_history: {
-        Row: TaskHistory;
-        Insert: Omit<TaskHistory, "id" | "changed_at"> & { id?: string; changed_at?: string };
-        Update: Partial<TaskHistory>;
-        Relationships: [];
-      };
+      profiles: { Row: Profile; Insert: Partial<Profile> & Pick<Profile, "id" | "full_name" | "email" | "role">; Update: Partial<Profile>; Relationships: [] };
+      tasks: { Row: Task; Insert: Partial<Task>; Update: Partial<Task>; Relationships: [] };
+      conversations: { Row: Conversation; Insert: Partial<Conversation>; Update: Partial<Conversation>; Relationships: [] };
+      conversation_members: { Row: ConversationMember; Insert: Partial<ConversationMember>; Update: Partial<ConversationMember>; Relationships: [] };
+      messages: { Row: Message; Insert: Partial<Message>; Update: Partial<Message>; Relationships: [] };
+      message_attachments: { Row: MessageAttachment; Insert: Partial<MessageAttachment>; Update: Partial<MessageAttachment>; Relationships: [] };
+      message_reactions: { Row: MessageReaction; Insert: Partial<MessageReaction>; Update: Partial<MessageReaction>; Relationships: [] };
+      team_settings: { Row: TeamSettings; Insert: Partial<TeamSettings>; Update: Partial<TeamSettings>; Relationships: [] };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

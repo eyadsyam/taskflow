@@ -92,14 +92,14 @@ export function TasksClient({ initialTasks, profiles }: { initialTasks: Task[]; 
   }
 
   return (
-    <div className="space-y-4">
+    <div className="p-4 md:p-6 lg:p-8 space-y-6">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold">المهام</h1>
-          <p className="text-sm text-muted-foreground">{filtered.length} تاسك</p>
+          <h1 className="text-3xl font-bold">المهام</h1>
+          <p className="text-muted-foreground mt-1">{filtered.length} مهمة</p>
         </div>
-        <Button asChild>
-          <Link href="/tasks/new"><Plus className="h-4 w-4" /> تاسك جديد</Link>
+        <Button asChild variant="gradient">
+          <Link href="/tasks/new"><Plus className="h-4 w-4" /> مهمة جديدة</Link>
         </Button>
       </div>
 

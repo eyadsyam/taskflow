@@ -43,38 +43,38 @@ export function LoginForm() {
 
   return (
     <div className="space-y-4">
-      <Button type="button" variant="outline" className="w-full" onClick={onGoogle} disabled={googleLoading}>
+      <Button type="button" variant="outline" className="w-full h-11" onClick={onGoogle} disabled={googleLoading}>
         {googleLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <GoogleIcon />}
         تسجيل الدخول بـ Google
       </Button>
 
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t" />
+          <span className="w-full border-t border-border" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">أو</span>
+          <span className="bg-background px-3 text-muted-foreground">أو ادخل ببريدك</span>
         </div>
       </div>
 
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="email">البريد الإلكتروني</Label>
-          <Input id="email" type="email" autoComplete="email" {...form.register("email")} />
+          <Input id="email" type="email" placeholder="email@example.com" dir="ltr" autoComplete="email" {...form.register("email")} />
           {form.formState.errors.email && (
             <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
           )}
         </div>
         <div className="space-y-2">
           <Label htmlFor="password">كلمة السر</Label>
-          <Input id="password" type="password" autoComplete="current-password" {...form.register("password")} />
+          <Input id="password" type="password" placeholder="••••••" autoComplete="current-password" {...form.register("password")} />
           {form.formState.errors.password && (
             <p className="text-xs text-destructive">{form.formState.errors.password.message}</p>
           )}
         </div>
-        <Button type="submit" className="w-full" disabled={loading}>
+        <Button type="submit" variant="gradient" className="w-full h-11" disabled={loading}>
           {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-          دخول
+          تسجيل الدخول
         </Button>
       </form>
     </div>
