@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eyad Syam — Full-Stack Developer | SaaS Portfolio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  :root {
+    --bg: #0a0a0f;
+    --bg-elevated: #12121a;
+    --bg-card: #1a1a24;
+    --border: #27272f;
+    --text: #ffffff;
+    --text-muted: #9ca3af;
+    --text-dim: #6b7280;
+    --primary: #a855f7;
+    --accent: #ec4899;
+    --blue: #3b82f6;
+    --green: #10b981;
+    --amber: #f59e0b;
+  }
+  
+  body {
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+  
+  code, .mono { font-family: 'JetBrains Mono', monospace; font-size: 0.9em; }
+  
+  .container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+  
+  /* Hero */
+  .hero {
+    padding: 100px 0 60px;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: 
+      radial-gradient(ellipse at top left, rgba(168, 85, 247, 0.15), transparent 50%),
+      radial-gradient(ellipse at top right, rgba(236, 72, 153, 0.1), transparent 50%);
+    z-index: -1;
+  }
+  
+  .hero h1 {
+    font-size: 72px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, #fff 0%, #a1a1aa 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  
+  .hero .tagline {
+    font-size: 24px;
+    color: var(--text-muted);
+    font-weight: 400;
+    max-width: 600px;
+    margin-bottom: 32px;
+  }
+  
+  .hero .contact {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    font-size: 14px;
+    color: var(--text-dim);
+  }
+  
+  .hero .contact a { color: var(--text); text-decoration: none; border-bottom: 1px solid var(--border); transition: border-color 0.2s; }
+  .hero .contact a:hover { border-color: var(--primary); }
+  
+  /* Section */
+  section { padding: 60px 0; }
+  
+  .section-label {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--primary);
+    margin-bottom: 12px;
+    padding: 4px 10px;
+    background: rgba(168, 85, 247, 0.1);
+    border: 1px solid rgba(168, 85, 247, 0.2);
+    border-radius: 20px;
+  }
+  
+  h2 {
+    font-size: 42px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin-bottom: 20px;
+  }
+  
+  h3 {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin-bottom: 12px;
+  }
+  
+  p { color: var(--text-muted); margin-bottom: 16px; }
+  
+  /* Project card */
+  .project {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 40px;
+  }
+  
+  .project-header {
+    padding: 32px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.08) 0%, rgba(59, 130, 246, 0.05) 100%);
+  }
+  
+  .project-title {
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+  }
+  
+  .project-subtitle {
+    font-size: 16px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+  }
+  
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 0;
+  }
+  
+  .tag {
+    font-size: 12px;
+    padding: 4px 10px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-muted);
+  }
+  
+  .project-body {
+    padding: 32px;
+  }
+  
+  .screenshot {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    margin: 24px 0;
+    background: var(--bg-card);
+  }
+  
+  .screenshot img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  
+  .screenshot-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 24px 0;
+  }
+  
+  @media (max-width: 700px) {
+    .screenshot-grid { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 48px; }
+    h2 { font-size: 32px; }
+  }
+  
+  /* Features list */
+  .features {
+    list-style: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 24px;
+    margin: 16px 0;
+  }
+  
+  @media (max-width: 700px) {
+    .features { grid-template-columns: 1fr; }
+  }
+  
+  .features li {
+    padding-left: 24px;
+    position: relative;
+    color: var(--text-muted);
+    font-size: 15px;
+  }
+  
+  .features li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 10px;
+    width: 12px;
+    height: 2px;
+    background: var(--primary);
+    border-radius: 2px;
+  }
+  
+  /* Stack table */
+  .stack-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 24px 0;
+    background: var(--bg-card);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  
+  .stack-table th, .stack-table td {
+    padding: 14px 20px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  
+  .stack-table tr:last-child td { border-bottom: none; }
+  
+  .stack-table th {
+    background: var(--bg-elevated);
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+  }
+  
+  .stack-table td {
+    font-size: 14px;
+  }
+  
+  .stack-table td:first-child { font-weight: 500; }
+  .stack-table td:nth-child(2) { color: var(--primary); font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+  .stack-table td:last-child { color: var(--text-muted); font-size: 13px; }
+  
+  /* Pricing */
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin: 32px 0;
+  }
+  
+  @media (max-width: 768px) {
+    .pricing-grid { grid-template-columns: 1fr; }
+  }
+  
+  .price-card {
+    padding: 28px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    transition: all 0.3s;
+  }
+  
+  .price-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+  }
+  
+  .price-card.featured {
+    border-color: var(--primary);
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.08) 0%, var(--bg-elevated) 100%);
+  }
+  
+  .price-card h4 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  
+  .price-card .price {
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 12px 0;
+  }
+  
+  .price-card .duration {
+    color: var(--text-dim);
+    font-size: 14px;
+    margin-bottom: 16px;
+  }
+  
+  .price-card ul {
+    list-style: none;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  
+  .price-card li {
+    padding: 4px 0;
+    padding-left: 18px;
+    position: relative;
+  }
+  
+  .price-card li::before {
+    content: '—';
+    position: absolute;
+    left: 0;
+    color: var(--primary);
+  }
+  
+  /* Timeline */
+  .timeline {
+    position: relative;
+    padding-left: 40px;
+    margin: 32px 0;
+  }
+  
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 12px;
+    top: 8px;
+    bottom: 8px;
+    width: 1px;
+    background: var(--border);
+  }
+  
+  .timeline-item {
+    position: relative;
+    padding-bottom: 28px;
+  }
+  
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -34px;
+    top: 8px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--primary);
+    box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.2);
+  }
+  
+  .timeline-item h4 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  
+  .timeline-item .week {
+    font-size: 12px;
+    color: var(--primary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 8px;
+  }
+  
+  .timeline-item p {
+    font-size: 14px;
+    margin: 0;
+  }
+  
+  /* CTA */
+  .cta {
+    padding: 60px 48px;
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(59, 130, 246, 0.1) 100%);
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    border-radius: 24px;
+    margin-top: 60px;
+    text-align: center;
+  }
+  
+  .cta h2 {
+    margin-bottom: 12px;
+  }
+  
+  .cta p {
+    max-width: 500px;
+    margin: 0 auto 32px;
+  }
+  
+  .btn {
+    display: inline-block;
+    padding: 14px 32px;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    color: white;
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: 12px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 20px rgba(168, 85, 247, 0.3);
+  }
+  
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(168, 85, 247, 0.4);
+  }
+  
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: 40px 0;
+    color: var(--text-dim);
+    font-size: 13px;
+    border-top: 1px solid var(--border);
+    margin-top: 60px;
+  }
+  
+  /* Divider */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 48px 0;
+  }
+  
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin: 32px 0;
+  }
+  
+  @media (max-width: 640px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+  }
+  
+  .stat {
+    padding: 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+  
+  .stat .value {
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--primary);
+  }
+  
+  .stat .label {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 4px;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Hero -->
+  <section class="hero">
+    <h1>Eyad Syam</h1>
+    <p class="tagline">Full-stack developer building SaaS products with real-time architecture, robust backend design, and interfaces people actually want to use.</p>
+    <div class="contact">
+      <span><strong>Email:</strong> eyadsyam124@gmail.com</span>
+      <span><strong>GitHub:</strong> <a href="https://github.com/eyadsyam">github.com/eyadsyam</a></span>
+      <span><strong>Based in:</strong> Egypt</span>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- About -->
+  <section>
+    <span class="section-label">About</span>
+    <h2>How I work</h2>
+    <p>I build production-grade SaaS products end-to-end — from database schema and API design, through real-time infrastructure, to polished user interfaces. No templates, no boilerplate shortcuts.</p>
+    <p>My focus is on shipping software that works: clean architecture, security enforced at the database layer (RLS by default), and UX that feels considered rather than generic.</p>
+    
+    <div class="stats">
+      <div class="stat"><div class="value">14+</div><div class="label">Weeks typical SaaS build</div></div>
+      <div class="stat"><div class="value">8</div><div class="label">Database tables in recent build</div></div>
+      <div class="stat"><div class="value">5GB</div><div class="label">Max file upload supported</div></div>
+      <div class="stat"><div class="value">RTL</div><div class="label">Full Arabic support</div></div>
+    </div>
+  </section>
+
+  <!-- Project: TaskFlow -->
+  <section>
+    <span class="section-label">Case Study</span>
+    <h2>TaskFlow — Team collaboration SaaS</h2>
+    <p style="margin-bottom: 32px;">A complete team platform combining real-time chat, task management, and file sharing in one product. Built from scratch, deployed to production.</p>
+    
+    <div class="project">
+      <div class="project-header">
+        <div class="project-title">TaskFlow</div>
+        <p class="project-subtitle">Three workflows in one product: Chat · Tasks · Files</p>
+        <div class="tags">
+          <span class="tag">Next.js 14</span>
+          <span class="tag">TypeScript</span>
+          <span class="tag">Postgres</span>
+          <span class="tag">Supabase</span>
+          <span class="tag">Realtime</span>
+          <span class="tag">Tailwind CSS</span>
+          <span class="tag">RTL + Arabic</span>
+        </div>
+      </div>
+      
+      <div class="project-body">
+        <div class="screenshot">
+          <img src="screenshot-login.png" alt="Login page">
+        </div>
+        
+        <h3>Key features implemented</h3>
+        <ul class="features">
+          <li>Email + Google OAuth authentication</li>
+          <li>Multi-step onboarding wizard with profile setup</li>
+          <li>Real-time chat (channels + direct messages)</li>
+          <li>Typing indicators via broadcast channels</li>
+          <li>Emoji reactions with unique-per-user constraint</li>
+          <li>Reply threads with quote preview</li>
+          <li>Message editing and deletion</li>
+          <li>File uploads up to 5GB per file</li>
+          <li>Inline preview for images, video, and audio</li>
+          <li>Kanban + table views for tasks</li>
+          <li>4-state task workflow with locked final state</li>
+          <li>Live presence indicators across all pages</li>
+          <li>Per-task discussion rooms</li>
+          <li>Role-based access (admin / member)</li>
+          <li>Full Arabic interface (Egyptian dialect)</li>
+          <li>Dark mode with custom design system</li>
+        </ul>
+        
+        <div class="screenshot-grid">
+          <div class="screenshot">
+            <img src="screenshot-dashboard.png" alt="Dashboard">
+          </div>
+          <div class="screenshot">
+            <img src="screenshot-chat.png" alt="Chat interface">
+          </div>
+        </div>
+        
+        <h3>Database design</h3>
+        <p>Eight tables with proper foreign keys, indexed hot paths, and Row-Level Security policies enforced at the database layer. A lock trigger prevents editing of paid-closed tasks — the security isn't just in the UI.</p>
+        
+        <div class="screenshot">
+          <img src="screenshot-team.png" alt="Team page">
+        </div>
+        
+        <h3>Technical highlights</h3>
+        <ul class="features">
+          <li>Middleware handling 4 auth/onboarding states with appropriate redirects</li>
+          <li>Postgres triggers for automatic denormalization (last_message_at)</li>
+          <li>Indexed <code>(conversation_id, created_at DESC)</code> for message pagination</li>
+          <li>Realtime subscriptions scoped per-conversation</li>
+          <li>Custom design system with 20+ reusable primitives</li>
+          <li>Full RTL support with direction-aware spacing and animations</li>
+          <li>Custom SVG assets (logo, illustrations) instead of emoji decorations</li>
+          <li>Zero-downtime database migrations via Supabase Management API</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Proposed Stack -->
+  <section>
+    <span class="section-label">Proposed Technology</span>
+    <h2>Stack I'd use for your project</h2>
+    <p>Battle-tested technologies chosen for developer velocity, production reliability, and easy handoff to any developer who joins later. I'm open to alternatives based on your team's preferences.</p>
+    
+    <table class="stack-table">
+      <thead>
+        <tr>
+          <th>Layer</th>
+          <th>Technology</th>
+          <th>Why</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Framework</td><td>Next.js 14 (App Router)</td><td>Server components, SSR/SSG, edge runtime</td></tr>
+        <tr><td>Language</td><td>TypeScript (strict)</td><td>Type safety, fewer production bugs</td></tr>
+        <tr><td>Database</td><td>Postgres (Supabase)</td><td>SQL + RLS + migrations + realtime in one</td></tr>
+        <tr><td>Auth</td><td>Supabase Auth</td><td>OAuth + session handling built-in</td></tr>
+        <tr><td>Realtime</td><td>Supabase Realtime</td><td>No custom WebSocket server needed</td></tr>
+        <tr><td>Storage</td><td>Supabase Storage</td><td>Direct browser uploads, CDN-backed</td></tr>
+        <tr><td>UI primitives</td><td>Radix UI</td><td>Accessible headless components</td></tr>
+        <tr><td>Styling</td><td>Tailwind CSS</td><td>Consistent design tokens, fast iteration</td></tr>
+        <tr><td>Forms</td><td>React Hook Form + Zod</td><td>Type-safe validation, good DX</td></tr>
+        <tr><td>Server state</td><td>TanStack Query</td><td>Caching, refetching, optimistic updates</td></tr>
+        <tr><td>Deployment</td><td>Vercel</td><td>Zero-config for Next.js, global edge</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Timeline -->
+  <section>
+    <span class="section-label">Process</span>
+    <h2>How the 7-week build breaks down</h2>
+    
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="week">Week 1</div>
+        <h4>Discovery &amp; Architecture</h4>
+        <p>Requirements workshop, user flows, database schema, API contracts, design direction. Deliverable: technical spec, ERD, wireframes.</p>
+      </div>
+      <div class="timeline-item">
+        <div class="week">Week 2</div>
+        <h4>Foundation</h4>
+        <p>Repository setup with CI/CD, Supabase project with migrations and RLS policies, auth flow, design system components, deployment pipeline. Deliverable: empty app shell deployed to staging.</p>
+      </div>
+      <div class="timeline-item">
+        <div class="week">Weeks 3–5</div>
+        <h4>Core Features</h4>
+        <p>Primary user flows, real-time infrastructure (if needed), file handling, dashboards, admin surfaces. Deliverable: working MVP with all primary flows.</p>
+      </div>
+      <div class="timeline-item">
+        <div class="week">Week 6</div>
+        <h4>Polish &amp; Testing</h4>
+        <p>Cross-browser testing, mobile responsive, performance optimization, error handling, E2E testing. Deliverable: production-ready build.</p>
+      </div>
+      <div class="timeline-item">
+        <div class="week">Week 7</div>
+        <h4>Launch</h4>
+        <p>Production deployment, custom domain + SSL, analytics, documentation, handoff. Deliverable: live product + 2 weeks post-launch support.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section>
+    <span class="section-label">Investment</span>
+    <h2>Pricing tiers</h2>
+    <p>Fixed-price per milestone, not hourly. I absorb the risk of estimate inaccuracy. Final quote after a 30-minute scoping call.</p>
+    
+    <div class="pricing-grid">
+      <div class="price-card">
+        <h4>MVP</h4>
+        <div class="price">$2.5K – $4K</div>
+        <div class="duration">5–7 weeks</div>
+        <ul>
+          <li>Authentication</li>
+          <li>1 core user flow</li>
+          <li>Dashboard</li>
+          <li>Basic admin</li>
+        </ul>
+      </div>
+      <div class="price-card featured">
+        <h4>Standard SaaS</h4>
+        <div class="price">$4K – $7.5K</div>
+        <div class="duration">7–10 weeks</div>
+        <ul>
+          <li>Authentication + onboarding</li>
+          <li>3–4 core user flows</li>
+          <li>Dashboard + analytics</li>
+          <li>Role-based admin</li>
+          <li>Email notifications</li>
+        </ul>
+      </div>
+      <div class="price-card">
+        <h4>Complex</h4>
+        <div class="price">$7.5K – $12K</div>
+        <div class="duration">10–14 weeks</div>
+        <ul>
+          <li>Everything in Standard</li>
+          <li>Real-time features</li>
+          <li>External integrations</li>
+          <li>Payment processing</li>
+          <li>Mobile responsive+</li>
+        </ul>
+      </div>
+    </div>
+    
+    <h3>Included in every engagement</h3>
+    <ul class="features">
+      <li>Full source code (GitHub repository, you own everything)</li>
+      <li>Database schema + all migrations</li>
+      <li>Deployment to your preferred host</li>
+      <li>Technical documentation</li>
+      <li>2 weeks post-launch bug-fix support</li>
+      <li>Video codebase walkthrough for future developers</li>
+      <li>GitHub-based workflow with visibility from day one</li>
+      <li>Staging environment from Week 2 onwards</li>
+    </ul>
+  </section>
+
+  <!-- CTA -->
+  <section>
+    <div class="cta">
+      <h2>Ready to start?</h2>
+      <p>A 30-minute call is all I need to understand your project, walk you through the TaskFlow codebase, and send a firm quote with milestone breakdown.</p>
+      <a href="mailto:eyadsyam124@gmail.com" class="btn">Get in touch</a>
+    </div>
+  </section>
+
+  <footer>
+    © 2026 Eyad Syam · eyadsyam124@gmail.com
+  </footer>
+
+</div>
+
+</body>
+</html>
