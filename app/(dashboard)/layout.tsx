@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { ProfileContext } from "@/components/profile-context";
 import { PresenceTracker } from "@/components/presence-tracker";
+import { RealtimeAlerts } from "@/components/realtime-alerts";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = createClient();
@@ -20,6 +21,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <ProfileContext profile={profile}>
       <PresenceTracker />
+      <RealtimeAlerts userId={user.id} />
       <div className="min-h-screen bg-background">
         <Sidebar />
         <div className="lg:pr-[260px]">

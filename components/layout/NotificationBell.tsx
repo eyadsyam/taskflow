@@ -100,18 +100,31 @@ export function NotificationBell() {
     });
   }, [fetchNotifications]);
 
-  // Realtime subscription
+  // Realtime subscription — keeps the BELL list & badge live.
+  // (Sound + toast are handled globally by <RealtimeAlerts /> in the layout.)
   useEffect(() => {
     const client = supabase.current;
     const channel = client
-      .channel("notifications-bell")
+      .channel(`notifications-bell-${me.id}-${Date.now()}`)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${me.id}` },
         (payload) => {
-          setNotifications((prev) => [payload.new as Notification, ...prev].slice(0, 50));
-          // Only play sound for genuinely new (post-mount) notifications
-          if (initialLoadDone.current) playNotificationSound();
+          setNotifications((prev) => {
+            const incoming = payload.new as Notification;
+            if (prev.some((n) => n.id === incoming.id)) return prev;
+            return [incoming, ...prev].slice(0, 50);
+          });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "notifications", filter: `user_id=eq.${me.id}` },
+        (payload) => {
+          const updated = payload.new as Notification;
+          setNotifications((prev) =>
+            prev.map((n) => (n.id === updated.id ? { ...n, ...updated } : n)),
+          );
         },
       )
       .subscribe();
