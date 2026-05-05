@@ -57,12 +57,10 @@ export function TaskForm({ task, workTeam }: { task?: Task; workTeam: Profile[] 
 
   async function onFiles(files: FileList | null) {
     if (!files?.length) return;
-    const chosen = Array.from(files).slice(0, Math.max(0, 5 - attachments.length));
-    if (chosen.length === 0) return toast.error("الحد الأقصى 5 مرفقات");
+    const chosen = Array.from(files);
     setUploading(true);
     const uploaded: string[] = [];
     for (const f of chosen) {
-      if (f.size > 10 * 1024 * 1024) { toast.error(`${f.name} أكبر من 10MB`); continue; }
       const path = `${me.id}/${Date.now()}-${f.name}`;
       const { error } = await supabase.storage.from("task-attachments").upload(path, f);
       if (error) { toast.error(error.message); continue; }

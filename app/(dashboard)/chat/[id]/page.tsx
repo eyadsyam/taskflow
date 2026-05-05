@@ -40,19 +40,20 @@ export default async function ChatConversationPage({ params }: { params: { id: s
       *,
       author:profiles!messages_author_id_fkey(*),
       attachments:message_attachments(*),
-      reactions:message_reactions(*),
-      reply_to:messages!messages_reply_to_id_fkey(id, content, created_at, author:profiles!messages_author_id_fkey(*))
+      reactions:message_reactions(*)
     `)
     .eq("conversation_id", params.id)
     .order("created_at", { ascending: true })
     .limit(100);
 
-  const messages = (messagesData ?? []) as Array<Message & {
-    author: Profile;
-    attachments: MessageAttachment[];
-    reactions: MessageReaction[];
-    reply_to: (Message & { author: Profile }) | null;
-  }>;
+  type RawMsg = Message & { author: Profile; attachments: MessageAttachment[]; reactions: MessageReaction[] };
+  const raw = (messagesData ?? []) as RawMsg[];
+  // Resolve reply_to from already-loaded messages (PostgREST can't self-join)
+  const msgMap = new Map(raw.map((m) => [m.id, m]));
+  const messages = raw.map((m) => ({
+    ...m,
+    reply_to: m.reply_to_id ? (msgMap.get(m.reply_to_id) ?? null) : null,
+  }));
 
   // Load all team members for @mentions
   const { data: allMembersData } = await supabase

@@ -32,7 +32,8 @@
       "Exec(npx next)",
       "Exec(netlify)",
       "Exec(python)",
-      "Exec(npx netlify)"
+      "Exec(npx netlify)",
+      "Exec(head)"
     ]
   }
 }

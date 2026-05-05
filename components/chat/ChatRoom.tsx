@@ -53,15 +53,16 @@ export function ChatRoom({ conversation, members, allMembers, initialMessages, c
             *,
             author:profiles!messages_author_id_fkey(*),
             attachments:message_attachments(*),
-            reactions:message_reactions(*),
-            reply_to:messages!messages_reply_to_id_fkey(id, content, created_at, author:profiles!messages_author_id_fkey(*))
+            reactions:message_reactions(*)
           `)
           .eq("id", newMsg.id)
           .single();
         if (data) {
+          const raw = data as Omit<FullMessage, "reply_to"> & { reply_to_id: string | null };
           setMessages((prev) => {
-            if (prev.some((m) => m.id === (data as FullMessage).id)) return prev;
-            return [...prev, data as FullMessage];
+            if (prev.some((m) => m.id === raw.id)) return prev;
+            const replyParent = raw.reply_to_id ? prev.find((m) => m.id === raw.reply_to_id) ?? null : null;
+            return [...prev, { ...raw, reply_to: replyParent } as FullMessage];
           });
         }
       })
