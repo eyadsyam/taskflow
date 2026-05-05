@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { cn, relativeTime } from "@/lib/utils";
 import type { Notification } from "@/lib/database.types";
 import {
+  bindAudioUnlock,
   isNotificationSoundMuted,
   playNotificationSound,
   setNotificationSoundMuted,
@@ -61,16 +62,21 @@ export function NotificationBell() {
   const initialLoadDone = useRef(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Read mute pref on mount (client-only)
+  // Read mute pref on mount + bind audio unlock to first user gesture
   useEffect(() => {
     setMuted(isNotificationSoundMuted());
+    bindAudioUnlock();
   }, []);
 
   function toggleMute() {
     const next = !muted;
     setMuted(next);
     setNotificationSoundMuted(next);
-    if (!next) playNotificationSound({ force: true }); // preview when unmuting
+    if (!next) playNotificationSound({ force: true }); // preview the alarm
+  }
+
+  function testSound() {
+    playNotificationSound({ force: true });
   }
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
@@ -164,6 +170,16 @@ export function NotificationBell() {
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <h3 className="font-semibold text-sm">الإشعارات</h3>
             <div className="flex gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs"
+                onClick={testSound}
+                title="جرب الصوت"
+              >
+                <Volume2 className="h-3 w-3" />
+                جرب
+              </Button>
               <Button
                 variant="ghost"
                 size="icon-sm"

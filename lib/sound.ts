@@ -1,9 +1,13 @@
 /**
- * Plays a short, pleasant two-tone "ding" notification sound using the
- * Web Audio API. No audio file required.
+ * Loud, attention-grabbing notification sound using the Web Audio API.
  *
- * Uses a quick exponential decay envelope on a sine wave so it doesn't
- * click. Two notes (E5 → A5) make it feel positive and chime-like.
+ * Browsers block audio until a user gesture happens. We work around this by:
+ *   1. Listening for the FIRST user interaction (pointer/key/touch) and
+ *      resuming/warming the AudioContext immediately ("unlocking").
+ *   2. Awaiting `ctx.resume()` inside `playNotificationSound` as a fallback.
+ *
+ * The sound is a 3-beep alarm pattern (high → low → high) with a square +
+ * sine mix at near-max gain so it cuts through any environment.
  */
 
 const STORAGE_KEY = "tf:notif-sound-muted";
@@ -20,41 +24,118 @@ export function setNotificationSoundMuted(muted: boolean) {
 }
 
 let cachedCtx: AudioContext | null = null;
+let unlocked = false;
+let unlockBound = false;
 
 function getContext(): AudioContext | null {
   if (typeof window === "undefined") return null;
   if (cachedCtx) return cachedCtx;
-  const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  const Ctor =
+    window.AudioContext ??
+    (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
   if (!Ctor) return null;
   cachedCtx = new Ctor();
   return cachedCtx;
 }
 
-function playTone(ctx: AudioContext, freq: number, startAt: number, duration = 0.18) {
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.type = "sine";
-  osc.frequency.value = freq;
-  // Volume envelope: quick attack, exponential decay
-  gain.gain.setValueAtTime(0, startAt);
-  gain.gain.linearRampToValueAtTime(0.18, startAt + 0.01);
-  gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.start(startAt);
-  osc.stop(startAt + duration + 0.02);
+/** Unlock the AudioContext on the first user gesture (browser autoplay policy). */
+export function bindAudioUnlock() {
+  if (typeof window === "undefined" || unlockBound) return;
+  unlockBound = true;
+  const handler = async () => {
+    const ctx = getContext();
+    if (!ctx) return;
+    try {
+      if (ctx.state === "suspended") await ctx.resume();
+      // Play a silent buffer to fully unlock on iOS/Safari
+      const buf = ctx.createBuffer(1, 1, 22050);
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      src.connect(ctx.destination);
+      src.start(0);
+      unlocked = true;
+    } catch {
+      /* ignore */
+    } finally {
+      window.removeEventListener("pointerdown", handler);
+      window.removeEventListener("keydown", handler);
+      window.removeEventListener("touchstart", handler);
+    }
+  };
+  window.addEventListener("pointerdown", handler, { once: true });
+  window.addEventListener("keydown", handler, { once: true });
+  window.addEventListener("touchstart", handler, { once: true });
 }
 
-export function playNotificationSound(opts: { force?: boolean } = {}) {
+/** Play one beep at the given frequency, starting at startAt seconds. */
+function playBeep(
+  ctx: AudioContext,
+  freq: number,
+  startAt: number,
+  duration = 0.18,
+  volume = 0.85,
+) {
+  // Mix square (cuts through) + sine (warmer body)
+  const square = ctx.createOscillator();
+  const sine = ctx.createOscillator();
+  const squareGain = ctx.createGain();
+  const sineGain = ctx.createGain();
+  const masterGain = ctx.createGain();
+
+  square.type = "square";
+  square.frequency.value = freq;
+  sine.type = "sine";
+  sine.frequency.value = freq;
+
+  squareGain.gain.value = 0.35;
+  sineGain.gain.value = 0.65;
+
+  // ADSR-like envelope: quick attack, short hold, fast decay (no clicks).
+  masterGain.gain.setValueAtTime(0, startAt);
+  masterGain.gain.linearRampToValueAtTime(volume, startAt + 0.008);
+  masterGain.gain.linearRampToValueAtTime(volume, startAt + duration - 0.04);
+  masterGain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
+
+  square.connect(squareGain).connect(masterGain);
+  sine.connect(sineGain).connect(masterGain);
+  masterGain.connect(ctx.destination);
+
+  square.start(startAt);
+  sine.start(startAt);
+  square.stop(startAt + duration + 0.02);
+  sine.stop(startAt + duration + 0.02);
+}
+
+export async function playNotificationSound(opts: { force?: boolean } = {}) {
   if (!opts.force && isNotificationSoundMuted()) return;
   const ctx = getContext();
   if (!ctx) return;
-  // Some browsers suspend AudioContext until a user gesture.
-  // If suspended, try resume but don't await — sound may simply not play
-  // until the user interacts with the page.
-  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+  try {
+    if (ctx.state === "suspended") {
+      await ctx.resume();
+    }
+  } catch {
+    /* ignore */
+  }
   const now = ctx.currentTime;
-  // Two-tone chime: E5 then A5
-  playTone(ctx, 659.25, now);            // E5
-  playTone(ctx, 880.0, now + 0.13);      // A5
+  // 3-beep alarm pattern: high → low → high. Loud and unmistakable.
+  // Tones tuned to be attention-grabbing without being painful.
+  playBeep(ctx, 1175, now + 0.0,  0.16, 0.9);  // D6 (high)
+  playBeep(ctx, 880,  now + 0.20, 0.16, 0.9);  // A5 (mid)
+  playBeep(ctx, 1175, now + 0.40, 0.20, 0.95); // D6 (high, longer)
 }
+
+/** Quick single-beep used as a UI confirmation when toggling settings. */
+export async function playPreviewSound() {
+  const ctx = getContext();
+  if (!ctx) return;
+  try {
+    if (ctx.state === "suspended") await ctx.resume();
+  } catch {
+    /* ignore */
+  }
+  const now = ctx.currentTime;
+  playBeep(ctx, 1175, now, 0.18, 0.85);
+}
+
+export { unlocked };
