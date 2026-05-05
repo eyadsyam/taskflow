@@ -33,7 +33,8 @@
       "Exec(netlify)",
       "Exec(python)",
       "Exec(npx netlify)",
-      "Exec(head)"
+      "Exec(head)",
+      "Exec(npx supabase)"
     ]
   }
 }

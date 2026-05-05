@@ -10,12 +10,12 @@ import {
   MessageCircle,
   X,
   Search,
-  Bell,
   ChevronLeft,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { NotificationBell } from "@/components/layout/NotificationBell";
 
 const NAV = [
   { href: "/dashboard", label: "الرئيسية", icon: LayoutDashboard },
@@ -100,14 +100,7 @@ export function Header() {
             <kbd className="hidden md:inline-flex">⌘K</kbd>
           </Button>
 
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="h-8 w-8 text-muted-foreground hover:text-foreground relative"
-            title="الإشعارات"
-          >
-            <Bell className="h-3.5 w-3.5" />
-          </Button>
+          <NotificationBell />
 
           <Button asChild size="sm" variant="default" className="h-8 hidden md:inline-flex">
             <Link href="/tasks/new">

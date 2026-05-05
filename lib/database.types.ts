@@ -127,6 +127,18 @@ export type MessageReaction = {
   created_at: string;
 };
 
+export type Notification = {
+  id: string;
+  user_id: string;
+  type: string;
+  title: string;
+  body: string | null;
+  link: string | null;
+  is_read: boolean;
+  metadata: Record<string, unknown>;
+  created_at: string;
+};
+
 // Composed types for UI
 export type MessageWithRelations = Message & {
   author: Profile;
