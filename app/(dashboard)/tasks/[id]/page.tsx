@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Lock, Pencil, User, Calendar, Tag, Phone, Paperclip, ArrowRight } from "lucide-react";
+import { Lock, Pencil, User, Calendar, Tag, Phone, FolderInput, FolderOutput, ArrowRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import type { AttachmentItem, Profile, Task, Conversation } from "@/lib/database.types";
 import { Button } from "@/components/ui/button";
@@ -30,7 +30,9 @@ export default async function TaskDetailPage({ params }: { params: { id: string 
   const creator = profileMap.get(t.created_by);
   const locked = t.status === "paid_closed";
 
-  const items: AttachmentItem[] = t.attachment_items ?? [];
+  const workingItems: AttachmentItem[] = t.attachment_items ?? [];
+  const submissionItems: AttachmentItem[] = t.submission_items ?? [];
+  const hasLegacyAttachments = (t.attachments?.length ?? 0) > 0 && workingItems.length === 0;
 
   return (
     <div className="fade-in">
@@ -144,14 +146,42 @@ export default async function TaskDetailPage({ params }: { params: { id: string 
           </div>
         )}
 
-        {/* Attachments — folder-aware tree */}
-        {(items.length > 0 || (t.attachments?.length ?? 0) > 0) && (
-          <div className="rounded-lg border border-border bg-card p-5">
-            <div className="section-label mb-3 flex items-center gap-1.5">
-              <Paperclip className="h-3 w-3" />
-              الملفات والمجلدات
+        {/* Working files — what we're working on */}
+        {(workingItems.length > 0 || hasLegacyAttachments) && (
+          <div className="rounded-lg border border-border bg-card overflow-hidden">
+            <div className="flex items-start gap-3 px-5 py-3.5 border-b border-border bg-primary/5 text-primary">
+              <FolderInput className="h-4 w-4 shrink-0 mt-0.5" />
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-semibold">ملفات الشغل</div>
+                <div className="text-xs opacity-80 mt-0.5">
+                  المواد اللي بنشتغل عليها التاسك
+                </div>
+              </div>
             </div>
-            <AttachmentsView items={items} legacyUrls={t.attachments ?? []} />
+            <div className="p-4">
+              <AttachmentsView items={workingItems} legacyUrls={t.attachments ?? []} />
+            </div>
+          </div>
+        )}
+
+        {/* Submission files — what we're delivering */}
+        {submissionItems.length > 0 && (
+          <div className="rounded-lg border border-emerald-400/30 bg-card overflow-hidden shadow-[0_0_0_1px_hsl(var(--emerald-400)/0.05)]">
+            <div className="flex items-start gap-3 px-5 py-3.5 border-b border-emerald-400/30 bg-emerald-400/5 text-emerald-400">
+              <FolderOutput className="h-4 w-4 shrink-0 mt-0.5" />
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-semibold">ملفات التسليم للعميل</div>
+                <div className="text-xs opacity-80 mt-0.5">
+                  النسخ النهائية الجاهزة للعميل
+                </div>
+              </div>
+              <div className="text-[10px] uppercase tracking-wider opacity-70 shrink-0 mt-1">
+                {countItems(submissionItems)} ملف
+              </div>
+            </div>
+            <div className="p-4">
+              <AttachmentsView items={submissionItems} legacyUrls={[]} />
+            </div>
           </div>
         )}
 
@@ -159,6 +189,10 @@ export default async function TaskDetailPage({ params }: { params: { id: string 
       </section>
     </div>
   );
+}
+
+function countItems(items: AttachmentItem[]): number {
+  return items.length;
 }
 
 function InfoCell({

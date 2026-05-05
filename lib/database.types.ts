@@ -64,6 +64,7 @@ export type Task = {
   tags: string[] | null;
   attachments: string[] | null;
   attachment_items: AttachmentItem[] | null;
+  submission_items: AttachmentItem[] | null;
   is_locked: boolean;
   created_at: string;
   updated_at: string;

@@ -30,6 +30,17 @@ export const taskSchema = z.object({
       }),
     )
     .default([]),
+  submission_items: z
+    .array(
+      z.object({
+        url: z.string(),
+        name: z.string(),
+        path: z.string(),
+        type: z.string().nullable().optional(),
+        size: z.number().nullable().optional(),
+      }),
+    )
+    .default([]),
 });
 
 export type TaskFormValues = z.infer<typeof taskSchema>;
