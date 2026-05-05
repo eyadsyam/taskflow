@@ -286,24 +286,26 @@ export function TaskForm({ task, workTeam }: { task?: Task; workTeam: Profile[] 
         />
       </SectionCard>
 
-      {/* Submission files (output) */}
-      <SectionCard
-        icon={<FolderOutput className="h-4 w-4" />}
-        title="ملفات التسليم للعميل"
-        subtitle="النسخ النهائية اللي هتبعتها للعميل بعد ما تخلص"
-        accentClassName="text-emerald-400 border-emerald-400/30 bg-emerald-400/5"
-      >
-        <AttachmentsField
-          value={submissionItems}
-          onChange={(items) =>
-            form.setValue("submission_items", items, { shouldDirty: true })
-          }
-          userId={me.id}
-          bucketPrefix="submission"
-          accent="success"
-          onUploadingChange={setSubmissionUploading}
-        />
-      </SectionCard>
+      {/* Submission files — only when editing an existing task (i.e. delivering) */}
+      {!isNew && (
+        <SectionCard
+          icon={<FolderOutput className="h-4 w-4" />}
+          title="ملفات التسليم للعميل"
+          subtitle="النسخ النهائية اللي هتبعتها للعميل بعد ما تخلص"
+          accentClassName="text-emerald-400 border-emerald-400/30 bg-emerald-400/5"
+        >
+          <AttachmentsField
+            value={submissionItems}
+            onChange={(items) =>
+              form.setValue("submission_items", items, { shouldDirty: true })
+            }
+            userId={me.id}
+            bucketPrefix="submission"
+            accent="success"
+            onUploadingChange={setSubmissionUploading}
+          />
+        </SectionCard>
+      )}
 
       <div className="flex justify-start gap-2">
         <Button type="submit" variant="gradient" disabled={submitting || uploading}>
