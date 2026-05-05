@@ -35,6 +35,20 @@ export type TeamSettings = {
   updated_at: string;
 };
 
+export type AttachmentItem = {
+  /** Full public URL of the file in storage */
+  url: string;
+  /** Original file name (basename) */
+  name: string;
+  /** Relative path inside the uploaded folder, e.g. "BigData/templates/file.pdf".
+   *  For single files this is just the file name. */
+  path: string;
+  /** MIME type */
+  type?: string | null;
+  /** Size in bytes */
+  size?: number | null;
+};
+
 export type Task = {
   id: string;
   title: string;
@@ -49,6 +63,7 @@ export type Task = {
   currency: string | null;
   tags: string[] | null;
   attachments: string[] | null;
+  attachment_items: AttachmentItem[] | null;
   is_locked: boolean;
   created_at: string;
   updated_at: string;

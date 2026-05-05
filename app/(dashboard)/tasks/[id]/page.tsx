@@ -2,12 +2,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Lock, Pencil, User, Calendar, Tag, Phone, Paperclip, ArrowRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import type { Profile, Task, Conversation } from "@/lib/database.types";
+import type { AttachmentItem, Profile, Task, Conversation } from "@/lib/database.types";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { TaskStatusBadge } from "@/components/tasks/TaskStatusBadge";
 import { StatusChanger } from "@/components/tasks/StatusChanger";
 import { TaskChatLink } from "@/components/tasks/TaskChatLink";
+import { AttachmentsView } from "@/components/tasks/AttachmentsView";
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +29,8 @@ export default async function TaskDetailPage({ params }: { params: { id: string 
   const assignee = t.assigned_to ? profileMap.get(t.assigned_to) : null;
   const creator = profileMap.get(t.created_by);
   const locked = t.status === "paid_closed";
+
+  const items: AttachmentItem[] = t.attachment_items ?? [];
 
   return (
     <div className="fade-in">
@@ -129,38 +132,26 @@ export default async function TaskDetailPage({ params }: { params: { id: string 
             <div className="section-label mb-3">تاجات</div>
             <div className="flex flex-wrap gap-1.5">
               {t.tags!.map((tag) => (
-                <span
+                <Link
                   key={tag}
-                  className="rounded-md bg-elevated border border-border px-2 py-0.5 text-xs"
+                  href={`/tags/${encodeURIComponent(tag)}`}
+                  className="rounded-md bg-elevated border border-border px-2 py-0.5 text-xs hover:bg-primary/10 hover:text-primary hover:border-primary/40 transition-colors"
                 >
                   {tag}
-                </span>
+                </Link>
               ))}
             </div>
           </div>
         )}
 
-        {/* Attachments */}
-        {(t.attachments?.length ?? 0) > 0 && (
+        {/* Attachments — folder-aware tree */}
+        {(items.length > 0 || (t.attachments?.length ?? 0) > 0) && (
           <div className="rounded-lg border border-border bg-card p-5">
             <div className="section-label mb-3 flex items-center gap-1.5">
               <Paperclip className="h-3 w-3" />
-              الملفات
+              الملفات والمجلدات
             </div>
-            <div className="space-y-2">
-              {t.attachments!.map((url) => (
-                <a
-                  key={url}
-                  href={url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-2 text-sm rounded-md border border-border bg-elevated/50 p-3 hover:border-border-strong hover:bg-elevated transition-colors truncate"
-                >
-                  <Paperclip className="h-3.5 w-3.5 shrink-0 text-primary" />
-                  <span className="truncate">{decodeURIComponent(url.split("/").pop() ?? url)}</span>
-                </a>
-              ))}
-            </div>
+            <AttachmentsView items={items} legacyUrls={t.attachments ?? []} />
           </div>
         )}
 

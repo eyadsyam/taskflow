@@ -12,7 +12,8 @@ import {
   Search,
   ChevronLeft,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/layout/NotificationBell";
@@ -35,7 +36,27 @@ const PAGE_INFO: Record<string, { label: string; hint?: string }> = {
 
 export function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [isMac, setIsMac] = useState(false);
+
+  useEffect(() => {
+    if (typeof navigator !== "undefined") {
+      setIsMac(/Mac|iPhone|iPad|iPod/i.test(navigator.platform || navigator.userAgent));
+    }
+  }, []);
+
+  // Cmd/Ctrl+K → open AI search
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        router.push("/search");
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [router]);
 
   // Build breadcrumb segments
   const segments = pathname.split("/").filter(Boolean);
@@ -91,13 +112,16 @@ export function Header() {
         {/* Right side actions */}
         <div className="flex items-center gap-1">
           <Button
+            asChild
             variant="ghost"
             size="sm"
             className="hidden sm:inline-flex h-8 gap-2 px-2.5 text-muted-foreground hover:text-foreground"
           >
-            <Search className="h-3.5 w-3.5" />
-            <span className="hidden md:inline text-xs">دور...</span>
-            <kbd className="hidden md:inline-flex">⌘K</kbd>
+            <Link href="/search">
+              <Search className="h-3.5 w-3.5" />
+              <span className="hidden md:inline text-xs">دور بالـ AI...</span>
+              <kbd className="hidden md:inline-flex">{isMac ? "⌘K" : "Ctrl+K"}</kbd>
+            </Link>
           </Button>
 
           <NotificationBell />

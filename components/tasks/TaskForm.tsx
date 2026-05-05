@@ -4,10 +4,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, Upload, X, Sparkles, Wand2, Tags } from "lucide-react";
+import { Loader2, Upload, X, Folder, FolderOpen, File as FileIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { taskSchema, type TaskFormValues } from "@/lib/schemas";
-import type { Profile, Task } from "@/lib/database.types";
+import type { AttachmentItem, Profile, Task } from "@/lib/database.types";
 import { useProfile } from "@/components/profile-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,18 +16,26 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { STATUS_LABELS, STATUS_ORDER } from "@/lib/utils";
 
+// Extend HTMLInputElement file input attrs with non-standard `webkitdirectory`
+// so TS lets us pass it through to the DOM.
+declare module "react" {
+  interface InputHTMLAttributes<T> {
+    webkitdirectory?: string;
+    directory?: string;
+  }
+}
+
+type FileWithPath = File & { webkitRelativePath?: string };
+
 export function TaskForm({ task, workTeam }: { task?: Task; workTeam: Profile[] }) {
   const supabase = createClient();
   const router = useRouter();
   const me = useProfile();
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [generatingTitle, setGeneratingTitle] = useState(false);
-  const [improvingDesc, setImprovingDesc] = useState(false);
-  const [suggestingTags, setSuggestingTags] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
   const [numberingTitle, setNumberingTitle] = useState(false);
   const [tagInput, setTagInput] = useState("");
-  const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskSchema),
@@ -43,19 +51,18 @@ export function TaskForm({ task, workTeam }: { task?: Task; workTeam: Profile[] 
       currency: task?.currency ?? "EGP",
       tags: task?.tags ?? [],
       attachments: task?.attachments ?? [],
+      attachment_items: (task?.attachment_items ?? normalizeLegacyAttachments(task?.attachments ?? [])) as AttachmentItem[],
     },
   });
 
   const tags = form.watch("tags");
-  const attachments = form.watch("attachments");
+  const items = form.watch("attachment_items") as AttachmentItem[];
   const isNew = !task;
 
-  // Count existing tasks that have the given tag, then auto-set title to
-  // `{tag} #{count+1}`. Only runs on NEW tasks and only if title is empty.
   async function autoNumberTitleForTag(tagName: string) {
     if (!isNew) return;
     const currentTitle = form.getValues("title").trim();
-    if (currentTitle.length > 0) return; // don't overwrite user-entered titles
+    if (currentTitle.length > 0) return;
     setNumberingTitle(true);
     try {
       const { count, error } = await supabase
@@ -85,8 +92,6 @@ export function TaskForm({ task, workTeam }: { task?: Task; workTeam: Profile[] 
     const wasEmpty = tags.length === 0;
     form.setValue("tags", [...tags, clean], { shouldDirty: true });
     setTagInput("");
-    setSuggestedTags((prev) => prev.filter((s) => s !== clean));
-    // Auto-number title based on FIRST tag only
     if (wasEmpty) autoNumberTitleForTag(clean);
   }
 
@@ -94,121 +99,88 @@ export function TaskForm({ task, workTeam }: { task?: Task; workTeam: Profile[] 
     form.setValue("tags", tags.filter((x) => x !== t), { shouldDirty: true });
   }
 
-  async function onFiles(files: FileList | null) {
-    if (!files?.length) return;
-    const chosen = Array.from(files);
+  /**
+   * Upload one or more files to storage.
+   * `relativePath` is the path inside the uploaded folder (e.g. "BigData/templates/foo.pdf").
+   * For single files (no folder) it's just the file name.
+   */
+  async function uploadFiles(files: FileWithPath[]) {
+    if (!files.length) return;
     setUploading(true);
-    const uploaded: string[] = [];
-    for (const f of chosen) {
-      const path = `${me.id}/${Date.now()}-${f.name}`;
-      const { error } = await supabase.storage.from("task-attachments").upload(path, f);
-      if (error) { toast.error(error.message); continue; }
-      const { data } = supabase.storage.from("task-attachments").getPublicUrl(path);
-      uploaded.push(data.publicUrl);
+    setUploadProgress({ done: 0, total: files.length });
+
+    const uploaded: AttachmentItem[] = [];
+    const batchId = Date.now();
+
+    for (let i = 0; i < files.length; i++) {
+      const f = files[i];
+      const relativePath = f.webkitRelativePath && f.webkitRelativePath.length > 0
+        ? f.webkitRelativePath
+        : f.name;
+      // Storage path: `{user_id}/{batchId}/{relativePath}`.
+      // The batchId prevents collisions when the same folder is uploaded twice.
+      const storagePath = `${me.id}/${batchId}/${relativePath}`;
+      const { error } = await supabase.storage.from("task-attachments").upload(storagePath, f, {
+        cacheControl: "3600",
+        upsert: false,
+      });
+      if (error) {
+        toast.error(`${f.name}: ${error.message}`);
+        continue;
+      }
+      const { data } = supabase.storage.from("task-attachments").getPublicUrl(storagePath);
+      uploaded.push({
+        url: data.publicUrl,
+        name: f.name,
+        path: relativePath,
+        type: f.type || null,
+        size: f.size || null,
+      });
+      setUploadProgress({ done: i + 1, total: files.length });
     }
-    form.setValue("attachments", [...attachments, ...uploaded], { shouldDirty: true });
+
+    form.setValue("attachment_items", [...items, ...uploaded], { shouldDirty: true });
     setUploading(false);
-  }
-
-  function removeAttachment(url: string) {
-    form.setValue("attachments", attachments.filter((a) => a !== url), { shouldDirty: true });
-  }
-
-  async function callAI(path: string, body: Record<string, unknown>) {
-    const session = (await supabase.auth.getSession()).data.session;
-    const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/${path}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session?.access_token ?? ""}`,
-      },
-      body: JSON.stringify(body),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "AI error");
-    return data;
-  }
-
-  async function generateTitle() {
-    const description = form.getValues("description");
-    const client_name = form.getValues("client_name");
-    const currentTags = form.getValues("tags");
-    if (!description && !client_name && (!currentTags || currentTags.length === 0)) {
-      toast.error("اكتب تفاصيل أو اسم عميل أو تاجات الأول");
-      return;
-    }
-    setGeneratingTitle(true);
-    try {
-      const data = await callAI("generate-task-title", {
-        description,
-        client_name,
-        tags: currentTags,
-        price: form.getValues("price"),
-        currency: form.getValues("currency"),
-      });
-      form.setValue("title", data.title, { shouldDirty: true, shouldValidate: true });
-      toast.success("اتولد عنوان جديد ✨");
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setGeneratingTitle(false);
+    setUploadProgress(null);
+    if (uploaded.length > 0) {
+      toast.success(`${uploaded.length} ملف اترفع`);
     }
   }
 
-  async function improveDescription() {
-    const description = form.getValues("description");
-    if (!description || description.trim().length < 5) {
-      toast.error("اكتب شوية تفاصيل الأول");
-      return;
-    }
-    setImprovingDesc(true);
-    try {
-      const data = await callAI("improve-task-description", {
-        description,
-        client_name: form.getValues("client_name"),
-        tags: form.getValues("tags"),
-      });
-      form.setValue("description", data.description, { shouldDirty: true });
-      toast.success("اتحسّنت التفاصيل ✨");
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setImprovingDesc(false);
-    }
+  function onFiles(fileList: FileList | null) {
+    if (!fileList?.length) return;
+    uploadFiles(Array.from(fileList) as FileWithPath[]);
   }
 
-  async function suggestTags() {
-    const description = form.getValues("description");
-    const client_name = form.getValues("client_name");
-    if (!description && !client_name) {
-      toast.error("اكتب تفاصيل أو اسم عميل الأول");
-      return;
-    }
-    setSuggestingTags(true);
-    try {
-      const data = await callAI("suggest-task-tags", {
-        description,
-        client_name,
-        existing_tags: form.getValues("tags"),
-      });
-      setSuggestedTags(data.tags ?? []);
-      if (!data.tags?.length) toast.info("مفيش اقتراحات جديدة");
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setSuggestingTags(false);
-    }
+  function removeItem(path: string) {
+    form.setValue("attachment_items", items.filter((a) => a.path !== path), { shouldDirty: true });
+  }
+
+  function removeFolder(folderPath: string) {
+    const prefix = folderPath.endsWith("/") ? folderPath : folderPath + "/";
+    form.setValue(
+      "attachment_items",
+      items.filter((a) => !a.path.startsWith(prefix)),
+      { shouldDirty: true },
+    );
   }
 
   async function onSubmit(values: TaskFormValues) {
     setSubmitting(true);
     const payload = {
-      ...values,
+      title: values.title,
       description: values.description || null,
+      client_name: values.client_name,
       client_contact: values.client_contact || null,
+      status: values.status,
       assigned_to: values.assigned_to || null,
       due_date: values.due_date ? new Date(values.due_date).toISOString() : null,
       price: values.price === null || values.price === undefined ? null : Number(values.price),
+      currency: values.currency,
+      tags: values.tags,
+      // Keep legacy `attachments` (text[]) in sync with URLs for backward compat
+      attachments: values.attachment_items.map((a) => a.url),
+      attachment_items: values.attachment_items,
     };
 
     if (task) {
@@ -237,7 +209,7 @@ export function TaskForm({ task, workTeam }: { task?: Task; workTeam: Profile[] 
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-      {/* 1) TAGS — first, so we can auto-name the task */}
+      {/* 1) TAGS first — auto-names the task */}
       <Field
         label="التاجات"
         hint={isNew ? "أول تاج هيحدد اسم التاسك تلقائياً (مثلاً: تصميم #3)" : undefined}
@@ -252,69 +224,29 @@ export function TaskForm({ task, workTeam }: { task?: Task; workTeam: Profile[] 
             </span>
           ))}
         </div>
-        <div className="flex gap-2">
-          <Input
-            value={tagInput}
-            onChange={(e) => setTagInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addTag(tagInput); }
-            }}
-            onBlur={() => addTag(tagInput)}
-            placeholder="اكتب تاج (تصميم، موقع...) واضغط Enter"
-          />
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={suggestTags}
-            disabled={suggestingTags}
-            title="اقتراحات AI للتاجات"
-          >
-            {suggestingTags ? <Loader2 className="h-4 w-4 animate-spin" /> : <Tags className="h-4 w-4" />}
-            اقترح
-          </Button>
-        </div>
-        {suggestedTags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-2">
-            <span className="text-xs text-muted-foreground me-1">اقتراحات:</span>
-            {suggestedTags.map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => addTag(s)}
-                className="inline-flex items-center gap-1 rounded-full border border-border bg-elevated px-2 py-0.5 text-xs hover:bg-primary/10 hover:border-primary/40 hover:text-primary transition-colors"
-              >
-                <Sparkles className="h-3 w-3" />
-                {s}
-              </button>
-            ))}
-          </div>
-        )}
+        <Input
+          value={tagInput}
+          onChange={(e) => setTagInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addTag(tagInput); }
+          }}
+          onBlur={() => addTag(tagInput)}
+          placeholder="اكتب تاج (تصميم، Big Data...) واضغط Enter"
+        />
       </Field>
 
-      {/* 2) Title + Client + Contact */}
+      {/* 2) Title & client info */}
       <div className="grid gap-4 md:grid-cols-2">
         <Field label="عنوان التاسك" error={form.formState.errors.title?.message}>
           <div className="relative">
             <Input
               {...form.register("title")}
-              placeholder="هيتعبى تلقائياً من التاج أو اضغط AI"
-              className="pe-24"
+              placeholder="هيتعبى تلقائياً من أول تاج"
+              disabled={numberingTitle}
             />
-            <button
-              type="button"
-              onClick={generateTitle}
-              disabled={generatingTitle || numberingTitle}
-              title="ولّد عنوان بالـ AI من التفاصيل"
-              className="absolute end-1 top-1/2 -translate-y-1/2 inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10 disabled:opacity-50 transition-colors"
-            >
-              {generatingTitle || numberingTitle ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Sparkles className="h-3.5 w-3.5" />
-              )}
-              <span>AI</span>
-            </button>
+            {numberingTitle && (
+              <Loader2 className="absolute end-2 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+            )}
           </div>
         </Field>
         <Field label="اسم العميل" error={form.formState.errors.client_name?.message}>
@@ -362,49 +294,21 @@ export function TaskForm({ task, workTeam }: { task?: Task; workTeam: Profile[] 
         </Field>
       </div>
 
-      {/* 3) Description w/ AI improver */}
+      {/* 3) Description */}
       <Field label="التفاصيل">
-        <div className="relative">
-          <Textarea
-            rows={5}
-            {...form.register("description")}
-            placeholder="اكتب تفاصيل الشغل المطلوب..."
-            className="pe-2"
-          />
-          <button
-            type="button"
-            onClick={improveDescription}
-            disabled={improvingDesc}
-            title="حسّن التفاصيل بالـ AI"
-            className="absolute end-2 top-2 inline-flex items-center gap-1 rounded border border-border bg-elevated/90 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10 disabled:opacity-50 transition-colors backdrop-blur"
-          >
-            {improvingDesc ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Wand2 className="h-3.5 w-3.5" />
-            )}
-            <span>حسّن بالـ AI</span>
-          </button>
-        </div>
+        <Textarea rows={5} {...form.register("description")} placeholder="اكتب تفاصيل الشغل المطلوب..." />
       </Field>
 
-      {/* 4) Files */}
-      <Field label="الملفات">
-        <div className="space-y-2">
-          {attachments.map((url) => (
-            <div key={url} className="flex items-center justify-between rounded border p-2 text-sm">
-              <a href={url} target="_blank" rel="noreferrer" className="truncate hover:underline">{url.split("/").pop()}</a>
-              <button type="button" onClick={() => removeAttachment(url)} className="text-destructive hover:text-destructive/80">
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          ))}
-          <label className="flex items-center justify-center gap-2 cursor-pointer border-2 border-dashed rounded-md p-4 text-sm text-muted-foreground hover:bg-accent">
-            {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-            {uploading ? "بيترفع..." : "ارفع ملفات"}
-            <input type="file" className="hidden" multiple onChange={(e) => onFiles(e.target.files)} />
-          </label>
-        </div>
+      {/* 4) Attachments — file OR whole folder */}
+      <Field label="الملفات والمجلدات">
+        <AttachmentsEditor
+          items={items}
+          onRemove={removeItem}
+          onRemoveFolder={removeFolder}
+          onFiles={onFiles}
+          uploading={uploading}
+          progress={uploadProgress}
+        />
       </Field>
 
       <div className="flex justify-start gap-2">
@@ -418,6 +322,233 @@ export function TaskForm({ task, workTeam }: { task?: Task; workTeam: Profile[] 
   );
 }
 
+// ---------------------------------------------------------------------------
+
+function AttachmentsEditor({
+  items,
+  onRemove,
+  onRemoveFolder,
+  onFiles,
+  uploading,
+  progress,
+}: {
+  items: AttachmentItem[];
+  onRemove: (path: string) => void;
+  onRemoveFolder: (folder: string) => void;
+  onFiles: (files: FileList | null) => void;
+  uploading: boolean;
+  progress: { done: number; total: number } | null;
+}) {
+  const tree = buildFileTree(items);
+
+  return (
+    <div className="space-y-3">
+      {/* Existing files/folders */}
+      {items.length > 0 && (
+        <div className="rounded-lg border border-border bg-elevated/30 p-2">
+          <FileTreeView node={tree} onRemoveFile={onRemove} onRemoveFolder={onRemoveFolder} depth={0} />
+        </div>
+      )}
+
+      {/* Two upload buttons: single files, or whole folder */}
+      <div className="grid gap-2 sm:grid-cols-2">
+        <label className="flex items-center justify-center gap-2 cursor-pointer border-2 border-dashed border-border rounded-md p-4 text-sm text-muted-foreground hover:bg-accent hover:border-primary/40 transition-colors">
+          {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+          <span>{uploading ? "بيترفع..." : "ارفع ملفات"}</span>
+          <input type="file" className="hidden" multiple disabled={uploading} onChange={(e) => onFiles(e.target.files)} />
+        </label>
+
+        <label className="flex items-center justify-center gap-2 cursor-pointer border-2 border-dashed border-primary/30 rounded-md p-4 text-sm text-primary hover:bg-primary/5 hover:border-primary/60 transition-colors">
+          {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FolderOpen className="h-4 w-4" />}
+          <span>{uploading ? "بيترفع..." : "ارفع مجلد كامل"}</span>
+          <input
+            type="file"
+            className="hidden"
+            multiple
+            disabled={uploading}
+            webkitdirectory=""
+            directory=""
+            onChange={(e) => onFiles(e.target.files)}
+          />
+        </label>
+      </div>
+
+      {uploading && progress && (
+        <div className="text-xs text-muted-foreground">
+          {progress.done} / {progress.total}
+          <div className="mt-1 h-1 w-full rounded bg-elevated overflow-hidden">
+            <div
+              className="h-full bg-primary transition-all"
+              style={{ width: `${(progress.done / progress.total) * 100}%` }}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---- File tree building & rendering ---------------------------------------
+
+type TreeNode = {
+  name: string;
+  path: string; // full path from root
+  isFolder: boolean;
+  item?: AttachmentItem;
+  children: TreeNode[];
+};
+
+function buildFileTree(items: AttachmentItem[]): TreeNode {
+  const root: TreeNode = { name: "", path: "", isFolder: true, children: [] };
+
+  for (const item of items) {
+    const segments = item.path.split("/").filter(Boolean);
+    let current = root;
+    let accumPath = "";
+
+    for (let i = 0; i < segments.length; i++) {
+      const seg = segments[i];
+      accumPath = accumPath ? `${accumPath}/${seg}` : seg;
+      const isLast = i === segments.length - 1;
+
+      let child = current.children.find((c) => c.name === seg);
+      if (!child) {
+        child = {
+          name: seg,
+          path: accumPath,
+          isFolder: !isLast,
+          children: [],
+        };
+        current.children.push(child);
+      }
+      if (isLast) {
+        child.isFolder = false;
+        child.item = item;
+      }
+      current = child;
+    }
+  }
+
+  // Sort: folders first, then by name
+  const sortRec = (node: TreeNode) => {
+    node.children.sort((a, b) => {
+      if (a.isFolder !== b.isFolder) return a.isFolder ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    });
+    node.children.forEach(sortRec);
+  };
+  sortRec(root);
+
+  return root;
+}
+
+function FileTreeView({
+  node,
+  onRemoveFile,
+  onRemoveFolder,
+  depth,
+}: {
+  node: TreeNode;
+  onRemoveFile: (path: string) => void;
+  onRemoveFolder: (folder: string) => void;
+  depth: number;
+}) {
+  if (node.isFolder && depth === 0) {
+    // Root node — just render children without the folder header
+    return (
+      <div className="space-y-0.5">
+        {node.children.map((c) => (
+          <FileTreeView key={c.path} node={c} onRemoveFile={onRemoveFile} onRemoveFolder={onRemoveFolder} depth={1} />
+        ))}
+      </div>
+    );
+  }
+
+  const pad = { paddingInlineStart: `${depth * 16}px` };
+
+  if (node.isFolder) {
+    return (
+      <div>
+        <div
+          className="group flex items-center gap-2 px-2 py-1.5 rounded hover:bg-elevated/60"
+          style={pad}
+        >
+          <Folder className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+          <span className="text-sm font-medium flex-1 truncate">{node.name}</span>
+          <span className="text-[10px] text-muted-foreground">
+            {countFiles(node)} ملف
+          </span>
+          <button
+            type="button"
+            onClick={() => onRemoveFolder(node.path)}
+            className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
+            title="احذف المجلد كله"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+        <div className="space-y-0.5">
+          {node.children.map((c) => (
+            <FileTreeView key={c.path} node={c} onRemoveFile={onRemoveFile} onRemoveFolder={onRemoveFolder} depth={depth + 1} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // File
+  return (
+    <div
+      className="group flex items-center gap-2 px-2 py-1.5 rounded hover:bg-elevated/60"
+      style={pad}
+    >
+      <FileIcon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+      <a
+        href={node.item?.url}
+        target="_blank"
+        rel="noreferrer"
+        className="text-sm flex-1 truncate hover:text-primary hover:underline"
+      >
+        {node.name}
+      </a>
+      {node.item?.size != null && (
+        <span className="text-[10px] text-muted-foreground tabular">
+          {formatBytes(node.item.size)}
+        </span>
+      )}
+      <button
+        type="button"
+        onClick={() => onRemoveFile(node.path)}
+        className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
+      >
+        <X className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
+}
+
+function countFiles(node: TreeNode): number {
+  if (!node.isFolder) return 1;
+  return node.children.reduce((acc, c) => acc + countFiles(c), 0);
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`;
+}
+
+// Converts legacy `attachments: string[]` of URLs into AttachmentItems.
+function normalizeLegacyAttachments(urls: string[]): AttachmentItem[] {
+  return urls.map((url) => {
+    const name = decodeURIComponent(url.split("/").pop() ?? url);
+    return { url, name, path: name, type: null, size: null };
+  });
+}
+
+// ---------------------------------------------------------------------------
+
 function Field({ label, error, hint, children }: { label: string; error?: string; hint?: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
@@ -429,8 +560,6 @@ function Field({ label, error, hint, children }: { label: string; error?: string
   );
 }
 
-// Converts an ISO timestamp (or date-only string) to the "YYYY-MM-DDTHH:mm" shape
-// required by <input type="datetime-local"> in the user's local timezone.
 function toLocalDateTimeInput(iso: string): string {
   const d = new Date(iso);
   if (isNaN(d.getTime())) return "";

@@ -11,6 +11,7 @@ import {
   LogOut,
   Plus,
   Sparkles,
+  Hash,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ const NAV = [
   { href: "/dashboard", label: "الرئيسية", icon: LayoutDashboard, hint: "G D" },
   { href: "/chat", label: "الشات", icon: MessageCircle, hint: "G C" },
   { href: "/tasks", label: "التاسكات", icon: ListChecks, hint: "G T" },
+  { href: "/tags", label: "التاجات", icon: Hash, hint: "G H" },
   { href: "/team", label: "التيم", icon: Users, hint: "G P" },
 ];
 
@@ -36,8 +38,12 @@ export function Sidebar() {
         "bg-sidebar border-s border-sidebar-border",
       )}
     >
-      {/* Workspace header */}
-      <div className="flex items-center gap-2.5 px-4 h-[52px] border-b border-sidebar-border shrink-0">
+      {/* Workspace header — click to go home */}
+      <Link
+        href="/dashboard"
+        className="flex items-center gap-2.5 px-4 h-[52px] border-b border-sidebar-border shrink-0 hover:bg-elevated/40 transition-colors"
+        title="الرئيسية"
+      >
         <div className="relative h-7 w-7 rounded-md bg-primary grid place-items-center shrink-0">
           <span className="text-[11px] font-bold text-primary-foreground tabular">TF</span>
           <div className="absolute -bottom-0.5 -end-0.5 h-2 w-2 rounded-full bg-emerald-400 ring-2 ring-sidebar" />
@@ -46,7 +52,7 @@ export function Sidebar() {
           <div className="text-sm font-semibold leading-tight">TaskFlow</div>
           <div className="text-[10px] text-muted-foreground leading-tight">منصة الفريق</div>
         </div>
-      </div>
+      </Link>
 
       {/* Quick action */}
       <div className="px-3 pt-3 pb-2">
