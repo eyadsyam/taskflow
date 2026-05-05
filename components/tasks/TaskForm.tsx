@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, Upload, X } from "lucide-react";
+import { Loader2, Upload, X, Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { taskSchema, type TaskFormValues } from "@/lib/schemas";
 import type { Profile, Task } from "@/lib/database.types";
@@ -22,6 +22,7 @@ export function TaskForm({ task, workTeam }: { task?: Task; workTeam: Profile[] 
   const me = useProfile();
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [generatingTitle, setGeneratingTitle] = useState(false);
   const [tagInput, setTagInput] = useState("");
 
   const form = useForm<TaskFormValues>({
@@ -75,6 +76,52 @@ export function TaskForm({ task, workTeam }: { task?: Task; workTeam: Profile[] 
     form.setValue("attachments", attachments.filter((a) => a !== url), { shouldDirty: true });
   }
 
+  async function generateTitle() {
+    const description = form.getValues("description");
+    const client_name = form.getValues("client_name");
+    const currentTags = form.getValues("tags");
+    const price = form.getValues("price");
+    const currency = form.getValues("currency");
+
+    if (!description && !client_name && (!currentTags || currentTags.length === 0)) {
+      toast.error("اكتب تفاصيل أو اسم عميل أو تاجات الأول");
+      return;
+    }
+
+    setGeneratingTitle(true);
+    try {
+      const session = (await supabase.auth.getSession()).data.session;
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/generate-task-title`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.access_token ?? ""}`,
+          },
+          body: JSON.stringify({
+            description,
+            client_name,
+            tags: currentTags,
+            price,
+            currency,
+          }),
+        },
+      );
+      const data = await res.json();
+      if (!res.ok || !data.title) {
+        toast.error(data.error || "فشل في توليد العنوان");
+        return;
+      }
+      form.setValue("title", data.title, { shouldDirty: true, shouldValidate: true });
+      toast.success("اتولد العنوان ✨");
+    } catch (e) {
+      toast.error((e as Error).message || "حصل خطأ");
+    } finally {
+      setGeneratingTitle(false);
+    }
+  }
+
   async function onSubmit(values: TaskFormValues) {
     setSubmitting(true);
     const payload = {
@@ -114,7 +161,27 @@ export function TaskForm({ task, workTeam }: { task?: Task; workTeam: Profile[] 
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2">
         <Field label="عنوان التاسك" error={form.formState.errors.title?.message}>
-          <Input {...form.register("title")} placeholder="تصميم لوجو، تطوير موقع..." />
+          <div className="relative">
+            <Input
+              {...form.register("title")}
+              placeholder="تصميم لوجو، تطوير موقع..."
+              className="pe-24"
+            />
+            <button
+              type="button"
+              onClick={generateTitle}
+              disabled={generatingTitle}
+              title="ولّد عنوان بالـ AI من التفاصيل"
+              className="absolute end-1 top-1/2 -translate-y-1/2 inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10 disabled:opacity-50 transition-colors"
+            >
+              {generatingTitle ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Sparkles className="h-3.5 w-3.5" />
+              )}
+              <span>ولّد AI</span>
+            </button>
+          </div>
         </Field>
         <Field label="اسم العميل" error={form.formState.errors.client_name?.message}>
           <Input {...form.register("client_name")} />
