@@ -61,7 +61,11 @@ export function AttachmentsField({
         f.webkitRelativePath && f.webkitRelativePath.length > 0
           ? f.webkitRelativePath
           : f.name;
-      const storagePath = `${userId}/${bucketPrefix}/${batchId}/${relativePath}`;
+      // Supabase Storage rejects non-ASCII chars (Arabic, etc.) in keys.
+      // Sanitize storage path while keeping the original `relativePath` in
+      // the DB so the UI displays the real Arabic folder/file names.
+      const safeStoragePath = sanitizeStoragePath(relativePath, i);
+      const storagePath = `${userId}/${bucketPrefix}/${batchId}/${safeStoragePath}`;
       const { error } = await supabase.storage
         .from("task-attachments")
         .upload(storagePath, f, { cacheControl: "3600", upsert: false });
@@ -331,4 +335,39 @@ export function normalizeLegacyAttachments(urls: string[]): AttachmentItem[] {
     const name = decodeURIComponent(url.split("/").pop() ?? url);
     return { url, name, path: name, type: null, size: null };
   });
+}
+
+/**
+ * Sanitize a relative path so it's safe as a Supabase Storage object key.
+ * - Preserves slashes (folder hierarchy).
+ * - Replaces any non-ASCII or unsafe character with an underscore.
+ * - Keeps file extension visible (helpful for content-type detection).
+ * - Adds an index suffix to the filename to avoid collisions across
+ *   sanitized segments that map to the same name (e.g. two different
+ *   Arabic-named folders that both become "_____").
+ */
+function sanitizeStoragePath(relativePath: string, index: number): string {
+  const segments = relativePath.split("/").filter(Boolean);
+  if (segments.length === 0) return `file-${index}`;
+
+  const sanitized = segments.map((seg) => sanitizeSegment(seg));
+  // Append a small unique tag to the filename (last segment) so that
+  // sanitization collisions don't overwrite files within the same batch.
+  const last = sanitized[sanitized.length - 1];
+  const dot = last.lastIndexOf(".");
+  const base = dot > 0 ? last.slice(0, dot) : last;
+  const ext = dot > 0 ? last.slice(dot) : "";
+  sanitized[sanitized.length - 1] = `${base}-${index}${ext}`;
+  return sanitized.join("/");
+}
+
+function sanitizeSegment(seg: string): string {
+  // Allowed: a-z, A-Z, 0-9, dot, dash, underscore. Everything else → _
+  // Trim leading/trailing whitespace and dots.
+  const replaced = seg
+    .normalize("NFKD")
+    .replace(/[^\w.-]/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^[._]+|[._]+$/g, "");
+  return replaced.length > 0 ? replaced.slice(0, 80) : "x";
 }

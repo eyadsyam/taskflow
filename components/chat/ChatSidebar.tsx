@@ -2,7 +2,15 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Hash, Plus, Search, ChevronDown, ChevronLeft, MessageSquare } from "lucide-react";
+import {
+  Hash,
+  Plus,
+  Search,
+  ChevronDown,
+  ChevronLeft,
+  MessageSquare,
+  ListChecks,
+} from "lucide-react";
 import { cn, getUserStatus } from "@/lib/utils";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { Button } from "@/components/ui/button";
@@ -16,22 +24,37 @@ import type { Conversation, Profile } from "@/lib/database.types";
 interface Props {
   channels: Conversation[];
   dms: Conversation[];
+  taskChats: Conversation[];
   teamMembers: Profile[];
   currentUserId: string;
+  unreadByConv: Record<string, number>;
 }
 
-export function ChatSidebar({ channels, dms, teamMembers, currentUserId }: Props) {
+export function ChatSidebar({
+  channels,
+  dms,
+  taskChats,
+  teamMembers,
+  currentUserId,
+  unreadByConv,
+}: Props) {
   const params = useParams();
   const router = useRouter();
   const activeId = params?.id as string;
 
   const [search, setSearch] = useState("");
   const [showChannels, setShowChannels] = useState(true);
+  const [showTaskChats, setShowTaskChats] = useState(true);
   const [showDMs, setShowDMs] = useState(true);
   const [showMembers, setShowMembers] = useState(true);
   const [newChannelOpen, setNewChannelOpen] = useState(false);
   const [members, setMembers] = useState(teamMembers);
+  const [unread, setUnread] = useState<Record<string, number>>(unreadByConv);
 
+  // Sync prop changes (e.g. fresh layout fetch)
+  useEffect(() => { setUnread(unreadByConv); }, [unreadByConv]);
+
+  // Realtime: profile updates (presence)
   useEffect(() => {
     const supabase = createClient();
     const channel = supabase
@@ -44,13 +67,63 @@ export function ChatSidebar({ channels, dms, teamMembers, currentUserId }: Props
     return () => { supabase.removeChannel(channel); };
   }, []);
 
+  // Realtime: new messages → bump unread for non-active conversations
+  useEffect(() => {
+    const supabase = createClient();
+    // Build a set of conv ids the user is in (avoid bumping for unrelated convs)
+    const myConvIds = new Set<string>([
+      ...channels.map((c) => c.id),
+      ...dms.map((c) => c.id),
+      ...taskChats.map((c) => c.id),
+    ]);
+    const channel = supabase
+      .channel("sidebar-message-watch")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages" },
+        (payload) => {
+          const msg = payload.new as { conversation_id: string; author_id: string };
+          if (msg.author_id === currentUserId) return; // own message
+          if (!myConvIds.has(msg.conversation_id)) return;
+          if (msg.conversation_id === activeId) return; // currently viewing
+          setUnread((prev) => ({
+            ...prev,
+            [msg.conversation_id]: (prev[msg.conversation_id] ?? 0) + 1,
+          }));
+        },
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [channels, dms, taskChats, currentUserId, activeId]);
+
+  // When user opens a conversation, mark it read
+  useEffect(() => {
+    if (!activeId) return;
+    const supabase = createClient();
+    supabase
+      .rpc("mark_conversation_read", { p_user: currentUserId, p_conversation: activeId })
+      .then(() => {
+        setUnread((prev) => {
+          if (!prev[activeId]) return prev;
+          const next = { ...prev };
+          delete next[activeId];
+          return next;
+        });
+      });
+  }, [activeId, currentUserId]);
+
   const filteredChannels = channels.filter((c) =>
+    !search || (c.name?.toLowerCase().includes(search.toLowerCase()))
+  );
+  const filteredTaskChats = taskChats.filter((c) =>
     !search || (c.name?.toLowerCase().includes(search.toLowerCase()))
   );
 
   const filteredMembers = members.filter((m) =>
     !search || m.full_name.toLowerCase().includes(search.toLowerCase())
   );
+
+  const totalUnread = Object.values(unread).reduce((a, b) => a + b, 0);
 
   async function startDM(memberId: string) {
     const dmId = await getOrCreateDM(currentUserId, memberId);
@@ -67,9 +140,11 @@ export function ChatSidebar({ channels, dms, teamMembers, currentUserId }: Props
       <div className="px-4 h-[52px] border-b border-sidebar-border shrink-0 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h2 className="font-bold text-sm">الشات</h2>
-          <span className="text-[10px] text-muted-foreground tabular bg-elevated px-1.5 py-0.5 rounded">
-            {channels.length + dms.length}
-          </span>
+          {totalUnread > 0 && (
+            <span className="text-[10px] tabular bg-primary text-primary-foreground font-bold px-1.5 py-0.5 rounded-full">
+              {totalUnread > 99 ? "99+" : totalUnread}
+            </span>
+          )}
         </div>
         <NewChannelDialog
           open={newChannelOpen}
@@ -106,24 +181,40 @@ export function ChatSidebar({ channels, dms, teamMembers, currentUserId }: Props
           onToggle={() => setShowChannels(!showChannels)}
         >
           {filteredChannels.map((channel) => (
-            <Link
+            <ConvLink
               key={channel.id}
               href={`/chat/${channel.id}`}
-              className={cn(
-                "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors",
-                activeId === channel.id
-                  ? "bg-elevated text-foreground"
-                  : "text-muted-foreground hover:bg-elevated/60 hover:text-foreground"
-              )}
-            >
-              <Hash className="h-3.5 w-3.5 shrink-0 opacity-60" />
-              <span className="truncate">{channel.name}</span>
-            </Link>
+              active={activeId === channel.id}
+              unread={unread[channel.id] ?? 0}
+              icon={<Hash className="h-3.5 w-3.5 shrink-0 opacity-60" />}
+              label={channel.name ?? "(بدون اسم)"}
+            />
           ))}
           {filteredChannels.length === 0 && (
             <div className="px-2 py-1 text-[11px] text-muted-foreground/60">مفيش قنوات</div>
           )}
         </Section>
+
+        {/* Task chats */}
+        {taskChats.length > 0 && (
+          <Section
+            label="شات التاسكات"
+            count={taskChats.length}
+            open={showTaskChats}
+            onToggle={() => setShowTaskChats(!showTaskChats)}
+          >
+            {filteredTaskChats.map((c) => (
+              <ConvLink
+                key={c.id}
+                href={`/chat/${c.id}`}
+                active={activeId === c.id}
+                unread={unread[c.id] ?? 0}
+                icon={<ListChecks className="h-3.5 w-3.5 shrink-0 opacity-60" />}
+                label={c.name ?? "تاسك"}
+              />
+            ))}
+          </Section>
+        )}
 
         {/* DMs */}
         {dms.length > 0 && (
@@ -134,7 +225,14 @@ export function ChatSidebar({ channels, dms, teamMembers, currentUserId }: Props
             onToggle={() => setShowDMs(!showDMs)}
           >
             {dms.map((dm) => (
-              <DmItem key={dm.id} dmId={dm.id} activeId={activeId} currentUserId={currentUserId} members={members} />
+              <DmItem
+                key={dm.id}
+                dmId={dm.id}
+                activeId={activeId}
+                currentUserId={currentUserId}
+                members={members}
+                unread={unread[dm.id] ?? 0}
+              />
             ))}
           </Section>
         )}
@@ -171,6 +269,42 @@ export function ChatSidebar({ channels, dms, teamMembers, currentUserId }: Props
   );
 }
 
+function ConvLink({
+  href,
+  active,
+  unread,
+  icon,
+  label,
+}: {
+  href: string;
+  active: boolean;
+  unread: number;
+  icon: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors",
+        active
+          ? "bg-elevated text-foreground"
+          : unread > 0
+            ? "text-foreground font-semibold hover:bg-elevated/60"
+            : "text-muted-foreground hover:bg-elevated/60 hover:text-foreground",
+      )}
+    >
+      {icon}
+      <span className="truncate flex-1">{label}</span>
+      {unread > 0 && !active && (
+        <span className="text-[10px] tabular font-bold bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+          {unread > 99 ? "99+" : unread}
+        </span>
+      )}
+    </Link>
+  );
+}
+
 function Section({
   label,
   count,
@@ -199,11 +333,12 @@ function Section({
   );
 }
 
-function DmItem({ dmId, activeId, currentUserId, members }: {
+function DmItem({ dmId, activeId, currentUserId, members, unread }: {
   dmId: string;
   activeId: string;
   currentUserId: string;
   members: Profile[];
+  unread: number;
 }) {
   const [partner, setPartner] = useState<Profile | null>(null);
 
@@ -224,21 +359,28 @@ function DmItem({ dmId, activeId, currentUserId, members }: {
   }, [dmId, currentUserId, members]);
 
   if (!partner) return null;
-
   const status = getUserStatus(partner.last_seen_at);
+  const active = activeId === dmId;
 
   return (
     <Link
       href={`/chat/${dmId}`}
       className={cn(
         "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors",
-        activeId === dmId
+        active
           ? "bg-elevated text-foreground"
-          : "text-muted-foreground hover:bg-elevated/60 hover:text-foreground"
+          : unread > 0
+            ? "text-foreground font-semibold hover:bg-elevated/60"
+            : "text-muted-foreground hover:bg-elevated/60 hover:text-foreground",
       )}
     >
       <UserAvatar name={partner.full_name} src={partner.avatar_url} size="xs" status={status} />
-      <span className="truncate text-xs">{partner.full_name}</span>
+      <span className="flex-1 truncate text-xs">{partner.full_name}</span>
+      {unread > 0 && !active && (
+        <span className="text-[10px] tabular font-bold bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+          {unread > 99 ? "99+" : unread}
+        </span>
+      )}
     </Link>
   );
 }
@@ -273,6 +415,16 @@ function NewChannelDialog({
       } as Record<string, unknown>)
       .select()
       .single();
+    if (!error && data) {
+      // Add creator as member
+      await supabase
+        .from("conversation_members")
+        .insert({
+          conversation_id: (data as Conversation).id,
+          user_id: currentUserId,
+          is_admin: true,
+        } as Record<string, unknown>);
+    }
     setCreating(false);
     if (error || !data) {
       return toast.error("مقدرش يعمل القناة");
