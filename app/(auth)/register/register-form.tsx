@@ -27,7 +27,7 @@ export function RegisterForm() {
       email: values.email,
       password: values.password,
       options: {
-        data: { full_name: values.full_name, role: "member" },
+        data: { full_name: values.full_name, role: "work_team" },
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     });
