@@ -1,6 +1,26 @@
 "use client";
 import { useEffect, useState, useRef, useCallback } from "react";
-import { Bell, Check, CheckCheck, Trash2, ListChecks, MessageCircle, UserPlus, RefreshCw, Volume2, VolumeX } from "lucide-react";
+import {
+  Bell,
+  Check,
+  CheckCheck,
+  Trash2,
+  ListChecks,
+  MessageCircle,
+  UserPlus,
+  RefreshCw,
+  Volume2,
+  VolumeX,
+  AtSign,
+  Reply,
+  Smile,
+  Paperclip,
+  Send,
+  Calendar,
+  DollarSign,
+  PartyPopper,
+  MessageSquare,
+} from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/components/profile-context";
@@ -17,7 +37,18 @@ const ICON_MAP: Record<string, typeof Bell> = {
   task_created: ListChecks,
   task_status_changed: RefreshCw,
   task_assigned: UserPlus,
+  task_due_changed: Calendar,
+  task_price_changed: DollarSign,
+  task_files_added: Paperclip,
+  task_submitted: Send,
+  task_deleted: Trash2,
+  task_comment: MessageSquare,
   message_received: MessageCircle,
+  message_reply: Reply,
+  message_mention: AtSign,
+  message_reaction: Smile,
+  conversation_added: UserPlus,
+  member_joined: PartyPopper,
 };
 
 export function NotificationBell() {
