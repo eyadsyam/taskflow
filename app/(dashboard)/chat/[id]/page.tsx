@@ -40,7 +40,8 @@ export default async function ChatConversationPage({ params }: { params: { id: s
       *,
       author:profiles!messages_author_id_fkey(*),
       attachments:message_attachments(*),
-      reactions:message_reactions(*)
+      reactions:message_reactions(*),
+      reply_to:messages!messages_reply_to_id_fkey(id, content, created_at, author:profiles!messages_author_id_fkey(*))
     `)
     .eq("conversation_id", params.id)
     .order("created_at", { ascending: true })
@@ -50,6 +51,7 @@ export default async function ChatConversationPage({ params }: { params: { id: s
     author: Profile;
     attachments: MessageAttachment[];
     reactions: MessageReaction[];
+    reply_to: (Message & { author: Profile }) | null;
   }>;
 
   // Load all team members for @mentions

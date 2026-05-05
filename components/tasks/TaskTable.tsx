@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Lock, MoreHorizontal, Pencil, Trash2, ListChecks, Plus } from "lucide-react";
 import type { Profile, Task, TaskStatus } from "@/lib/database.types";
 import { TaskStatusBadge } from "@/components/tasks/TaskStatusBadge";
-import { formatCurrency, formatDate, STATUS_LABELS, STATUS_ORDER } from "@/lib/utils";
+import { formatCurrency, formatDateTime, STATUS_LABELS, STATUS_ORDER } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
@@ -138,7 +138,7 @@ function Row({
           </div>
         ) : <span className="text-xs text-muted-foreground">—</span>}
       </td>
-      <td className="px-4 py-3 hidden sm:table-cell text-muted-foreground text-xs tabular">{formatDate(task.due_date)}</td>
+      <td className="px-4 py-3 hidden sm:table-cell text-muted-foreground text-xs tabular">{formatDateTime(task.due_date)}</td>
       <td className="px-4 py-3 hidden md:table-cell text-xs tabular font-medium">{formatCurrency(task.price, task.currency ?? "EGP")}</td>
       <td className="px-3 py-3">
         <DropdownMenu>

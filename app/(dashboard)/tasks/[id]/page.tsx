@@ -8,7 +8,7 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import { TaskStatusBadge } from "@/components/tasks/TaskStatusBadge";
 import { StatusChanger } from "@/components/tasks/StatusChanger";
 import { TaskChatLink } from "@/components/tasks/TaskChatLink";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -107,7 +107,7 @@ export default async function TaskDetailPage({ params }: { params: { id: string 
               ) : <span className="text-xs text-muted-foreground">—</span>}
             </InfoCell>
             <InfoCell icon={Calendar} label="موعد التسليم">
-              <span className="text-sm font-medium tabular">{formatDate(t.due_date)}</span>
+              <span className="text-sm font-medium tabular">{formatDateTime(t.due_date)}</span>
             </InfoCell>
             <InfoCell icon={Phone} label="تليفون العميل">
               <span className="text-sm font-medium tabular" dir="ltr">{t.client_contact ?? "—"}</span>

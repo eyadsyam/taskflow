@@ -14,6 +14,7 @@ type FullMessage = Message & {
   author: Profile;
   attachments: MessageAttachment[];
   reactions: MessageReaction[];
+  reply_to: (Message & { author: Profile }) | null;
 };
 
 interface Props {
@@ -52,7 +53,8 @@ export function ChatRoom({ conversation, members, allMembers, initialMessages, c
             *,
             author:profiles!messages_author_id_fkey(*),
             attachments:message_attachments(*),
-            reactions:message_reactions(*)
+            reactions:message_reactions(*),
+            reply_to:messages!messages_reply_to_id_fkey(id, content, created_at, author:profiles!messages_author_id_fkey(*))
           `)
           .eq("id", newMsg.id)
           .single();

@@ -8,6 +8,7 @@ type FullMessage = Message & {
   author: Profile;
   attachments: MessageAttachment[];
   reactions: MessageReaction[];
+  reply_to: (Message & { author: Profile }) | null;
 };
 
 interface Props {

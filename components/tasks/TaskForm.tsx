@@ -33,7 +33,7 @@ export function TaskForm({ task, workTeam }: { task?: Task; workTeam: Profile[] 
       client_contact: task?.client_contact ?? "",
       status: task?.status ?? "pending_client",
       assigned_to: task?.assigned_to ?? null,
-      due_date: task?.due_date ?? "",
+      due_date: task?.due_date ? toLocalDateTimeInput(task.due_date) : "",
       price: task?.price ?? null,
       currency: task?.currency ?? "EGP",
       tags: task?.tags ?? [],
@@ -84,7 +84,7 @@ export function TaskForm({ task, workTeam }: { task?: Task; workTeam: Profile[] 
       description: values.description || null,
       client_contact: values.client_contact || null,
       assigned_to: values.assigned_to || null,
-      due_date: values.due_date || null,
+      due_date: values.due_date ? new Date(values.due_date).toISOString() : null,
       price: values.price === null || values.price === undefined ? null : Number(values.price),
     };
 
@@ -144,8 +144,8 @@ export function TaskForm({ task, workTeam }: { task?: Task; workTeam: Profile[] 
             </SelectContent>
           </Select>
         </Field>
-        <Field label="موعد التسليم">
-          <Input type="date" {...form.register("due_date")} />
+        <Field label="موعد التسليم (التاريخ والساعة)">
+          <Input type="datetime-local" {...form.register("due_date")} />
         </Field>
         <Field label="السعر">
           <div className="flex gap-2">
@@ -224,4 +224,13 @@ function Field({ label, error, children }: { label: string; error?: string; chil
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   );
+}
+
+// Converts an ISO timestamp (or date-only string) to the "YYYY-MM-DDTHH:mm" shape
+// required by <input type="datetime-local"> in the user's local timezone.
+function toLocalDateTimeInput(iso: string): string {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }

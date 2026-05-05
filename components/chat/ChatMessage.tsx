@@ -19,6 +19,7 @@ type FullMessage = Message & {
   author: Profile;
   attachments: MessageAttachment[];
   reactions: MessageReaction[];
+  reply_to: (Message & { author: Profile }) | null;
 };
 
 interface Props {
@@ -83,6 +84,19 @@ export function ChatMessage({ message, isOwn, currentUserId, showAvatar, onReply
             <span className="font-semibold text-sm">{message.author.full_name}</span>
             <span className="text-xs text-muted-foreground">{formatTime(message.created_at)}</span>
             {message.is_edited && <span className="text-xs text-muted-foreground italic">(اتعدل)</span>}
+          </div>
+        )}
+
+        {/* Reply indicator */}
+        {message.reply_to && (
+          <div className="flex items-start gap-1.5 mb-1.5 pl-2 border-l-2 border-lime-400/50">
+            <Reply className="h-3 w-3 mt-0.5 text-lime-400 shrink-0" />
+            <div className="min-w-0">
+              <span className="text-xs font-medium text-lime-400">{message.reply_to.author.full_name}</span>
+              <p className="text-xs text-muted-foreground truncate">
+                {message.reply_to.content || "ملف"}
+              </p>
+            </div>
           </div>
         )}
 

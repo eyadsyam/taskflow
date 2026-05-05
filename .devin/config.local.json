@@ -29,7 +29,10 @@
       "Exec(sed)",
       "Exec(cp)",
       "Exec(ls)",
-      "Exec(npx next)"
+      "Exec(npx next)",
+      "Exec(netlify)",
+      "Exec(python)",
+      "Exec(npx netlify)"
     ]
   }
 }
