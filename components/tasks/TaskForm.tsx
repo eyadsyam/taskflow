@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, Upload, X, Sparkles } from "lucide-react";
+import { Loader2, Upload, X, Sparkles, Wand2, Tags } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { taskSchema, type TaskFormValues } from "@/lib/schemas";
 import type { Profile, Task } from "@/lib/database.types";
@@ -23,7 +23,11 @@ export function TaskForm({ task, workTeam }: { task?: Task; workTeam: Profile[] 
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [generatingTitle, setGeneratingTitle] = useState(false);
+  const [improvingDesc, setImprovingDesc] = useState(false);
+  const [suggestingTags, setSuggestingTags] = useState(false);
+  const [numberingTitle, setNumberingTitle] = useState(false);
   const [tagInput, setTagInput] = useState("");
+  const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskSchema),
@@ -44,12 +48,46 @@ export function TaskForm({ task, workTeam }: { task?: Task; workTeam: Profile[] 
 
   const tags = form.watch("tags");
   const attachments = form.watch("attachments");
+  const isNew = !task;
+
+  // Count existing tasks that have the given tag, then auto-set title to
+  // `{tag} #{count+1}`. Only runs on NEW tasks and only if title is empty.
+  async function autoNumberTitleForTag(tagName: string) {
+    if (!isNew) return;
+    const currentTitle = form.getValues("title").trim();
+    if (currentTitle.length > 0) return; // don't overwrite user-entered titles
+    setNumberingTitle(true);
+    try {
+      const { count, error } = await supabase
+        .from("tasks")
+        .select("id", { count: "exact", head: true })
+        .contains("tags", [tagName]);
+      if (error) throw error;
+      const next = (count ?? 0) + 1;
+      form.setValue("title", `${tagName} #${next}`, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    } catch (e) {
+      console.error("autoNumberTitleForTag error:", e);
+    } finally {
+      setNumberingTitle(false);
+    }
+  }
 
   function addTag(t: string) {
     const clean = t.trim();
     if (!clean) return;
-    if (!tags.includes(clean)) form.setValue("tags", [...tags, clean], { shouldDirty: true });
+    if (tags.includes(clean)) {
+      setTagInput("");
+      return;
+    }
+    const wasEmpty = tags.length === 0;
+    form.setValue("tags", [...tags, clean], { shouldDirty: true });
     setTagInput("");
+    setSuggestedTags((prev) => prev.filter((s) => s !== clean));
+    // Auto-number title based on FIRST tag only
+    if (wasEmpty) autoNumberTitleForTag(clean);
   }
 
   function removeTag(t: string) {
@@ -76,49 +114,89 @@ export function TaskForm({ task, workTeam }: { task?: Task; workTeam: Profile[] 
     form.setValue("attachments", attachments.filter((a) => a !== url), { shouldDirty: true });
   }
 
+  async function callAI(path: string, body: Record<string, unknown>) {
+    const session = (await supabase.auth.getSession()).data.session;
+    const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/${path}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session?.access_token ?? ""}`,
+      },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "AI error");
+    return data;
+  }
+
   async function generateTitle() {
     const description = form.getValues("description");
     const client_name = form.getValues("client_name");
     const currentTags = form.getValues("tags");
-    const price = form.getValues("price");
-    const currency = form.getValues("currency");
-
     if (!description && !client_name && (!currentTags || currentTags.length === 0)) {
       toast.error("اكتب تفاصيل أو اسم عميل أو تاجات الأول");
       return;
     }
-
     setGeneratingTitle(true);
     try {
-      const session = (await supabase.auth.getSession()).data.session;
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/generate-task-title`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session?.access_token ?? ""}`,
-          },
-          body: JSON.stringify({
-            description,
-            client_name,
-            tags: currentTags,
-            price,
-            currency,
-          }),
-        },
-      );
-      const data = await res.json();
-      if (!res.ok || !data.title) {
-        toast.error(data.error || "فشل في توليد العنوان");
-        return;
-      }
+      const data = await callAI("generate-task-title", {
+        description,
+        client_name,
+        tags: currentTags,
+        price: form.getValues("price"),
+        currency: form.getValues("currency"),
+      });
       form.setValue("title", data.title, { shouldDirty: true, shouldValidate: true });
-      toast.success("اتولد العنوان ✨");
+      toast.success("اتولد عنوان جديد ✨");
     } catch (e) {
-      toast.error((e as Error).message || "حصل خطأ");
+      toast.error((e as Error).message);
     } finally {
       setGeneratingTitle(false);
+    }
+  }
+
+  async function improveDescription() {
+    const description = form.getValues("description");
+    if (!description || description.trim().length < 5) {
+      toast.error("اكتب شوية تفاصيل الأول");
+      return;
+    }
+    setImprovingDesc(true);
+    try {
+      const data = await callAI("improve-task-description", {
+        description,
+        client_name: form.getValues("client_name"),
+        tags: form.getValues("tags"),
+      });
+      form.setValue("description", data.description, { shouldDirty: true });
+      toast.success("اتحسّنت التفاصيل ✨");
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setImprovingDesc(false);
+    }
+  }
+
+  async function suggestTags() {
+    const description = form.getValues("description");
+    const client_name = form.getValues("client_name");
+    if (!description && !client_name) {
+      toast.error("اكتب تفاصيل أو اسم عميل الأول");
+      return;
+    }
+    setSuggestingTags(true);
+    try {
+      const data = await callAI("suggest-task-tags", {
+        description,
+        client_name,
+        existing_tags: form.getValues("tags"),
+      });
+      setSuggestedTags(data.tags ?? []);
+      if (!data.tags?.length) toast.info("مفيش اقتراحات جديدة");
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setSuggestingTags(false);
     }
   }
 
@@ -159,27 +237,83 @@ export function TaskForm({ task, workTeam }: { task?: Task; workTeam: Profile[] 
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      {/* 1) TAGS — first, so we can auto-name the task */}
+      <Field
+        label="التاجات"
+        hint={isNew ? "أول تاج هيحدد اسم التاسك تلقائياً (مثلاً: تصميم #3)" : undefined}
+      >
+        <div className="flex flex-wrap gap-2 mb-2">
+          {tags.map((t) => (
+            <span key={t} className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-2.5 py-0.5 text-xs font-medium">
+              {t}
+              <button type="button" onClick={() => removeTag(t)} className="hover:text-destructive">
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <Input
+            value={tagInput}
+            onChange={(e) => setTagInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addTag(tagInput); }
+            }}
+            onBlur={() => addTag(tagInput)}
+            placeholder="اكتب تاج (تصميم، موقع...) واضغط Enter"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={suggestTags}
+            disabled={suggestingTags}
+            title="اقتراحات AI للتاجات"
+          >
+            {suggestingTags ? <Loader2 className="h-4 w-4 animate-spin" /> : <Tags className="h-4 w-4" />}
+            اقترح
+          </Button>
+        </div>
+        {suggestedTags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            <span className="text-xs text-muted-foreground me-1">اقتراحات:</span>
+            {suggestedTags.map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => addTag(s)}
+                className="inline-flex items-center gap-1 rounded-full border border-border bg-elevated px-2 py-0.5 text-xs hover:bg-primary/10 hover:border-primary/40 hover:text-primary transition-colors"
+              >
+                <Sparkles className="h-3 w-3" />
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
+      </Field>
+
+      {/* 2) Title + Client + Contact */}
       <div className="grid gap-4 md:grid-cols-2">
         <Field label="عنوان التاسك" error={form.formState.errors.title?.message}>
           <div className="relative">
             <Input
               {...form.register("title")}
-              placeholder="تصميم لوجو، تطوير موقع..."
+              placeholder="هيتعبى تلقائياً من التاج أو اضغط AI"
               className="pe-24"
             />
             <button
               type="button"
               onClick={generateTitle}
-              disabled={generatingTitle}
+              disabled={generatingTitle || numberingTitle}
               title="ولّد عنوان بالـ AI من التفاصيل"
               className="absolute end-1 top-1/2 -translate-y-1/2 inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10 disabled:opacity-50 transition-colors"
             >
-              {generatingTitle ? (
+              {generatingTitle || numberingTitle ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
                 <Sparkles className="h-3.5 w-3.5" />
               )}
-              <span>ولّد AI</span>
+              <span>AI</span>
             </button>
           </div>
         </Field>
@@ -228,30 +362,33 @@ export function TaskForm({ task, workTeam }: { task?: Task; workTeam: Profile[] 
         </Field>
       </div>
 
+      {/* 3) Description w/ AI improver */}
       <Field label="التفاصيل">
-        <Textarea rows={5} {...form.register("description")} placeholder="اكتب تفاصيل الشغل المطلوب..." />
-      </Field>
-
-      <Field label="التاجات">
-        <div className="flex flex-wrap gap-2 mb-2">
-          {tags.map((t) => (
-            <span key={t} className="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-0.5 text-xs">
-              {t}
-              <button type="button" onClick={() => removeTag(t)} className="hover:text-destructive"><X className="h-3 w-3" /></button>
-            </span>
-          ))}
+        <div className="relative">
+          <Textarea
+            rows={5}
+            {...form.register("description")}
+            placeholder="اكتب تفاصيل الشغل المطلوب..."
+            className="pe-2"
+          />
+          <button
+            type="button"
+            onClick={improveDescription}
+            disabled={improvingDesc}
+            title="حسّن التفاصيل بالـ AI"
+            className="absolute end-2 top-2 inline-flex items-center gap-1 rounded border border-border bg-elevated/90 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10 disabled:opacity-50 transition-colors backdrop-blur"
+          >
+            {improvingDesc ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Wand2 className="h-3.5 w-3.5" />
+            )}
+            <span>حسّن بالـ AI</span>
+          </button>
         </div>
-        <Input
-          value={tagInput}
-          onChange={(e) => setTagInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addTag(tagInput); }
-          }}
-          onBlur={() => addTag(tagInput)}
-          placeholder="اكتب واضغط Enter"
-        />
       </Field>
 
+      {/* 4) Files */}
       <Field label="الملفات">
         <div className="space-y-2">
           {attachments.map((url) => (
@@ -281,11 +418,12 @@ export function TaskForm({ task, workTeam }: { task?: Task; workTeam: Profile[] 
   );
 }
 
-function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
+function Field({ label, error, hint, children }: { label: string; error?: string; hint?: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
       <Label>{label}</Label>
       {children}
+      {hint && <p className="text-[11px] text-muted-foreground">{hint}</p>}
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   );
