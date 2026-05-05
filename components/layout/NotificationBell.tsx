@@ -1,12 +1,17 @@
 "use client";
 import { useEffect, useState, useRef, useCallback } from "react";
-import { Bell, Check, CheckCheck, Trash2, ListChecks, MessageCircle, UserPlus, RefreshCw } from "lucide-react";
+import { Bell, Check, CheckCheck, Trash2, ListChecks, MessageCircle, UserPlus, RefreshCw, Volume2, VolumeX } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/components/profile-context";
 import { Button } from "@/components/ui/button";
 import { cn, relativeTime } from "@/lib/utils";
 import type { Notification } from "@/lib/database.types";
+import {
+  isNotificationSoundMuted,
+  playNotificationSound,
+  setNotificationSoundMuted,
+} from "@/lib/sound";
 
 const ICON_MAP: Record<string, typeof Bell> = {
   task_created: ListChecks,
@@ -21,7 +26,21 @@ export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const initialLoadDone = useRef(false);
   const panelRef = useRef<HTMLDivElement>(null);
+
+  // Read mute pref on mount (client-only)
+  useEffect(() => {
+    setMuted(isNotificationSoundMuted());
+  }, []);
+
+  function toggleMute() {
+    const next = !muted;
+    setMuted(next);
+    setNotificationSoundMuted(next);
+    if (!next) playNotificationSound({ force: true }); // preview when unmuting
+  }
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
@@ -39,22 +58,27 @@ export function NotificationBell() {
 
   // Initial fetch
   useEffect(() => {
-    fetchNotifications();
+    fetchNotifications().then(() => {
+      initialLoadDone.current = true;
+    });
   }, [fetchNotifications]);
 
   // Realtime subscription
   useEffect(() => {
-    const channel = supabase.current
+    const client = supabase.current;
+    const channel = client
       .channel("notifications-bell")
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${me.id}` },
         (payload) => {
           setNotifications((prev) => [payload.new as Notification, ...prev].slice(0, 50));
+          // Only play sound for genuinely new (post-mount) notifications
+          if (initialLoadDone.current) playNotificationSound();
         },
       )
       .subscribe();
-    return () => { supabase.current.removeChannel(channel); };
+    return () => { client.removeChannel(channel); };
   }, [me.id]);
 
   // Close on outside click
@@ -109,6 +133,19 @@ export function NotificationBell() {
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <h3 className="font-semibold text-sm">الإشعارات</h3>
             <div className="flex gap-1">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="h-7 w-7"
+                onClick={toggleMute}
+                title={muted ? "شغّل الصوت" : "اكتم الصوت"}
+              >
+                {muted ? (
+                  <VolumeX className="h-3.5 w-3.5 text-muted-foreground" />
+                ) : (
+                  <Volume2 className="h-3.5 w-3.5 text-primary" />
+                )}
+              </Button>
               {unreadCount > 0 && (
                 <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={markAllRead}>
                   <CheckCheck className="h-3 w-3" />
