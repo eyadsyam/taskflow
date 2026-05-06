@@ -12,6 +12,7 @@ import {
   Plus,
   Sparkles,
   Hash,
+  Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ const NAV = [
   { href: "/chat", label: "الشات", icon: MessageCircle, hint: "G C" },
   { href: "/tasks", label: "التاسكات", icon: ListChecks, hint: "G T" },
   { href: "/tags", label: "التاجات", icon: Hash, hint: "G H" },
+  { href: "/earnings", label: "المالية", icon: Wallet, hint: "G E" },
   { href: "/team", label: "التيم", icon: Users, hint: "G P" },
 ];
 

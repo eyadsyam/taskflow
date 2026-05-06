@@ -41,6 +41,34 @@ export function formatCurrency(amount: number | null, currency = "EGP"): string 
   }
 }
 
+/**
+ * Fixed conversion rate from SAR to EGP. The user works only with EGP & SAR
+ * and uses 12.5 EGP per 1 SAR (intentionally lower than the real rate to
+ * pre-account for an off-platform broker fee).
+ */
+export const SAR_TO_EGP = 12.5;
+
+/** Convert any supported currency amount to its EGP equivalent. */
+export function toEgp(amount: number | null, currency: string | null | undefined): number {
+  if (amount == null) return 0;
+  if (!currency || currency.toUpperCase() === "EGP") return amount;
+  if (currency.toUpperCase() === "SAR") return amount * SAR_TO_EGP;
+  return amount; // fallback — unsupported currency stays as-is
+}
+
+/**
+ * Compute task earnings split:
+ *   - Creator: 10% if total < 1000 EGP, 20% if >= 1000 EGP
+ *   - Assignee: gets the rest (90% / 80%)
+ */
+export function taskEarnings(price: number | null, currency: string | null | undefined) {
+  const totalEgp = toEgp(price, currency);
+  const creatorPct = totalEgp < 1000 ? 0.1 : 0.2;
+  const creatorAmount = Math.round(totalEgp * creatorPct * 100) / 100;
+  const assigneeAmount = Math.round(totalEgp * (1 - creatorPct) * 100) / 100;
+  return { totalEgp, creatorPct, creatorAmount, assigneeAmount };
+}
+
 export function formatDate(d: string | null | undefined): string {
   if (!d) return "—";
   try {

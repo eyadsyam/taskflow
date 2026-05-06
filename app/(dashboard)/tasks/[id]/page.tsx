@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Lock, Pencil, User, Calendar, Tag, Phone, FolderInput, FolderOutput, ArrowRight } from "lucide-react";
+import { Lock, Pencil, User, Calendar, Tag, Phone, FolderInput, FolderOutput, ArrowRight, Wallet } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import type { AttachmentItem, Profile, Task, Conversation } from "@/lib/database.types";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { TaskStatusBadge } from "@/components/tasks/TaskStatusBadge";
 import { StatusChanger } from "@/components/tasks/StatusChanger";
 import { TaskChatLink } from "@/components/tasks/TaskChatLink";
 import { AttachmentsView } from "@/components/tasks/AttachmentsView";
-import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
+import { formatCurrency, formatDate, formatDateTime, taskEarnings } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -128,6 +128,17 @@ export default async function TaskDetailPage({ params }: { params: { id: string 
           </div>
         </div>
 
+        {/* Earnings breakdown */}
+        {t.price != null && t.price > 0 && (
+          <EarningsCard
+            price={t.price}
+            currency={t.currency ?? "EGP"}
+            creator={creator}
+            assignee={assignee}
+            isPaid={t.status === "paid_closed"}
+          />
+        )}
+
         {/* Tags */}
         {(t.tags?.length ?? 0) > 0 && (
           <div className="rounded-lg border border-border bg-card p-5">
@@ -193,6 +204,77 @@ export default async function TaskDetailPage({ params }: { params: { id: string 
 
 function countItems(items: AttachmentItem[]): number {
   return items.length;
+}
+
+function EarningsCard({
+  price,
+  currency,
+  creator,
+  assignee,
+  isPaid,
+}: {
+  price: number;
+  currency: string;
+  creator?: Profile;
+  assignee?: Profile | null;
+  isPaid: boolean;
+}) {
+  const { totalEgp, creatorPct, creatorAmount, assigneeAmount } = taskEarnings(price, currency);
+  const creatorPctLabel = `${(creatorPct * 100).toFixed(0)}%`;
+  const assigneePctLabel = `${((1 - creatorPct) * 100).toFixed(0)}%`;
+  return (
+    <div className="rounded-lg border border-border bg-card overflow-hidden">
+      <div className="flex items-start gap-3 px-5 py-3.5 border-b border-border bg-amber-400/5 text-amber-400">
+        <Wallet className="h-4 w-4 shrink-0 mt-0.5" />
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-semibold">حساب التاسك</div>
+          <div className="text-xs opacity-80 mt-0.5">
+            {currency === "SAR"
+              ? `السعر: ${price} ر.س × 12.5 = ${formatCurrency(totalEgp, "EGP")}`
+              : `السعر: ${formatCurrency(totalEgp, "EGP")}`}
+            {" · "}
+            {totalEgp < 1000 ? "قاعدة <1000 جنيه (10/90)" : "قاعدة ≥1000 جنيه (20/80)"}
+          </div>
+        </div>
+        <div className="text-[10px] uppercase tracking-wider opacity-70 shrink-0 mt-1">
+          {isPaid ? "مدفوع" : "مستني"}
+        </div>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x rtl:sm:divide-x-reverse divide-border">
+        {/* Creator share */}
+        <div className="p-4">
+          <div className="text-xs text-muted-foreground mb-1.5">اللي عمل التاسك ({creatorPctLabel})</div>
+          {creator ? (
+            <div className="flex items-center gap-2 mb-2">
+              <UserAvatar name={creator.full_name} src={creator.avatar_url} size="xs" />
+              <span className="text-sm font-medium truncate">{creator.full_name}</span>
+            </div>
+          ) : (
+            <div className="text-sm text-muted-foreground mb-2">—</div>
+          )}
+          <div className={`text-2xl font-bold tabular ${isPaid ? "text-emerald-400" : "text-amber-400"}`}>
+            {formatCurrency(creatorAmount, "EGP")}
+          </div>
+        </div>
+
+        {/* Assignee share */}
+        <div className="p-4">
+          <div className="text-xs text-muted-foreground mb-1.5">الشغّال عليها ({assigneePctLabel})</div>
+          {assignee ? (
+            <div className="flex items-center gap-2 mb-2">
+              <UserAvatar name={assignee.full_name} src={assignee.avatar_url} size="xs" />
+              <span className="text-sm font-medium truncate">{assignee.full_name}</span>
+            </div>
+          ) : (
+            <div className="text-sm text-muted-foreground mb-2">لسه متعينش</div>
+          )}
+          <div className={`text-2xl font-bold tabular ${isPaid ? "text-emerald-400" : "text-amber-400"}`}>
+            {formatCurrency(assigneeAmount, "EGP")}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function InfoCell({

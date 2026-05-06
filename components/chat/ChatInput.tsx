@@ -1,12 +1,13 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
-import { Send, Paperclip, X, Smile, Loader2, Image as ImageIcon, FileText } from "lucide-react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { Send, Paperclip, X, Smile, Loader2, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { sendMessage } from "@/lib/chat-helpers";
 import { useProfile } from "@/components/profile-context";
 import { toast } from "sonner";
 import { cn, formatFileSize } from "@/lib/utils";
+import { VoiceRecorder } from "@/components/chat/VoiceRecorder";
 import type { Message, Profile, MessageAttachment, MessageReaction } from "@/lib/database.types";
 
 type FullMessage = Message & {
@@ -52,10 +53,43 @@ export function ChatInput({ conversationId, currentUserId, replyTo, onCancelRepl
     }
   }, [message]);
 
-  // Focus on mount
-  useEffect(() => {
+  const focusInput = useCallback(() => {
     textareaRef.current?.focus();
-  }, [conversationId]);
+  }, []);
+
+  // Focus on mount, on conversation change, and any time the window/tab
+  // regains focus. Also: if the user starts typing while focus is on
+  // something innocuous (body, links) auto-route their keystrokes to the
+  // textarea so they never miss a character.
+  useEffect(() => {
+    focusInput();
+  }, [conversationId, focusInput]);
+
+  useEffect(() => {
+    function onWindowFocus() { focusInput(); }
+    function onVisibilityChange() {
+      if (document.visibilityState === "visible") focusInput();
+    }
+    function onGlobalKey(e: KeyboardEvent) {
+      // Don't hijack keys with modifiers (Ctrl/Cmd shortcuts) or system keys
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      // Only printable characters re-focus the textarea
+      if (e.key.length !== 1) return;
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName;
+      // If user is already typing in some input/textarea/contenteditable, leave them alone
+      if (tag === "INPUT" || tag === "TEXTAREA" || target?.isContentEditable) return;
+      focusInput();
+    }
+    window.addEventListener("focus", onWindowFocus);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    document.addEventListener("keydown", onGlobalKey);
+    return () => {
+      window.removeEventListener("focus", onWindowFocus);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      document.removeEventListener("keydown", onGlobalKey);
+    };
+  }, [focusInput]);
 
   function handleTyping() {
     if (typingTimeout.current) clearTimeout(typingTimeout.current);
@@ -94,6 +128,8 @@ export function ChatInput({ conversationId, currentUserId, replyTo, onCancelRepl
         setMessage("");
         setFiles([]);
         onCancelReply();
+        // Re-focus the input so the user can keep typing
+        setTimeout(focusInput, 0);
       } else {
         toast.error("مقدرش يبعت");
       }
@@ -237,6 +273,19 @@ export function ChatInput({ conversationId, currentUserId, replyTo, onCancelRepl
             disabled={sending}
           />
           
+          <VoiceRecorder
+            disabled={sending}
+            onRecorded={async (file) => {
+              const sent = await sendMessage(conversationId, currentUserId, "", [file], replyTo?.id);
+              if (sent) {
+                onCancelReply();
+                focusInput();
+              } else {
+                toast.error("مقدرش يبعت التسجيل");
+              }
+            }}
+          />
+
           <Popover>
             <PopoverTrigger asChild>
               <Button type="button" variant="ghost" size="icon-sm" disabled={sending} title="إيموجي">
