@@ -37,7 +37,11 @@ export function ChatRoom({ conversation, members, allMembers, initialMessages, c
 
   // Set up realtime subscriptions
   useEffect(() => {
-    const channel = supabase.current
+    // One client for the whole subscription, so the cleanup removes the
+    // channel from the same client that opened it.
+    const client = supabase.current;
+    const typingTimers = new Set<ReturnType<typeof setTimeout>>();
+    const channel = client
       .channel(`conversation-${conversation.id}`)
       .on("postgres_changes", { 
         event: "INSERT", 
@@ -47,7 +51,7 @@ export function ChatRoom({ conversation, members, allMembers, initialMessages, c
       }, async (payload) => {
         const newMsg = payload.new as Message;
         // Fetch full message with relations
-        const { data } = await supabase.current
+        const { data } = await client
           .from("messages")
           .select(`
             *,
@@ -89,7 +93,7 @@ export function ChatRoom({ conversation, members, allMembers, initialMessages, c
         table: "message_reactions",
       }, async () => {
         // Refresh reactions for messages in this conversation
-        const { data } = await supabase.current
+        const { data } = await client
           .from("messages")
           .select(`*, reactions:message_reactions(*)`)
           .eq("conversation_id", conversation.id);
@@ -109,14 +113,17 @@ export function ChatRoom({ conversation, members, allMembers, initialMessages, c
         if (userId === currentUserId) return;
         setTypingUsers((prev) => prev.includes(name) ? prev : [...prev, name]);
         // Auto-remove after 3 seconds
-        setTimeout(() => {
+        const timer = setTimeout(() => {
+          typingTimers.delete(timer);
           setTypingUsers((prev) => prev.filter((n) => n !== name));
         }, 3000);
+        typingTimers.add(timer);
       })
       .subscribe();
 
-    return () => { 
-      supabase.current.removeChannel(channel); 
+    return () => {
+      typingTimers.forEach(clearTimeout);
+      client.removeChannel(channel);
     };
   }, [conversation.id, currentUserId]);
 
